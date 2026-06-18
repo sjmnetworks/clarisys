@@ -1,0 +1,148 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Service Restarts",
+        "datasource": "Prometheus",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "expr": "changes(process_start_time_seconds{job=~\"firewall-api-slo|firewall-api-alerts|firewall-api-roi|prometheus|node-exporter\"}[1m]) > 0",
+        "titleFormat": "Restart",
+        "textFormat": "Restart detected for {{job}}",
+        "type": "tags"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Security Posture",
+      "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "mode": "markdown",
+        "content": "### Security Posture\nPilot key age, exporter freshness, auth failures, and operational pressure signals.\n\nUse with the incident board for security-driven investigations."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Oldest Enabled Pilot Key (days)",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 3},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "d", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 60}, {"color": "red", "value": 90}]}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "max(firewall_pilot_key_age_days{enabled=\"true\"})", "legendFormat": "oldest"}]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Pilot Key Exporter Age (hours)",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 3},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "h", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 24}, {"color": "red", "value": 36}]}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "(time() - firewall_pilot_key_exporter_last_run_timestamp_seconds) / 3600", "legendFormat": "age"}]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Enabled Pilot Keys",
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 3},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "firewall_pilot_key_count{enabled=\"true\"}", "legendFormat": "enabled"}]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Disabled Pilot Keys",
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 3},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "firewall_pilot_key_count{enabled=\"false\"}", "legendFormat": "disabled"}]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Pilot Key Age by User",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 9},
+      "datasource": "Prometheus",
+      "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "fieldConfig": {"defaults": {"unit": "d", "color": {"mode": "palette-classic"}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "firewall_pilot_key_age_days", "legendFormat": "{{username}} (enabled={{enabled}})"}]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Auth Failures 401 / 403 (Loki, 1h)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 9},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "sum by (status_code) (count_over_time({job=\"systemd-journal\",unit=\"opa-api-8001.service\",status_code=~\"401|403\",request_id!~\"test-.*\"}[1h]))", "queryType": "range"}]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Rate-Limited Requests (5m)",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 17},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 5}]}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "firewall:rate_limited_5m", "legendFormat": "429s"}]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Canary Pass",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 17},
+      "datasource": "Prometheus",
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "fieldConfig": {"defaults": {"unit": "none", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "min(firewall_canary_pass)", "legendFormat": "pass"}]
+    },
+    {
+      "id": 10,
+      "type": "logs",
+      "title": "Security-Relevant Logs (Loki)",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 17},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true, "showCommonLabels": true, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
+      "targets": [{"refId": "A", "expr": "{job=\"systemd-journal\",unit=\"opa-api-8001.service\"} |~ \"(?i)(401|403|forbidden|unauthorized|rate_limited|pilot key|auth)\" | json | request_id !~ \"^test-\"", "queryType": "range"}]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["firewall", "security", "posture", "auth"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Firewall API - Security Posture",
+  "uid": "firewall-security-posture",
+  "version": 1,
+  "weekStart": ""
+}

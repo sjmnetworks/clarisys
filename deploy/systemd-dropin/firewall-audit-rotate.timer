@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily rotation of firewall audit logs
+After=network.target
+
+[Timer]
+OnCalendar=daily
+OnBootSec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

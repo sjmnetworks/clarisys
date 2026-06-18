@@ -1,0 +1,33 @@
+[Unit]
+Description=Daily pilot API key age exporter (textfile-collector)
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/OPA-policymodule
+
+# Defaults can be overridden by /etc/opa-api/pilot-key-age.env if present.
+EnvironmentFile=-/etc/opa-api/pilot-key-age.env
+
+# --export is the default; spelled out for readability in journal logs.
+ExecStart=/usr/bin/python3 /home/ubuntu/OPA-policymodule/tools/pilot_key_age.py \
+    --export \
+    --store /home/ubuntu/OPA-policymodule/policy/pilot_users.json \
+    --textfile-dir /var/lib/prometheus/node-exporter
+
+# Resource caps so the exporter can never wedge the box.
+MemoryMax=64M
+CPUQuota=10%
+
+# Hardening — read the JSON store, write only the textfile-collector dir.
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/home/ubuntu/OPA-policymodule/policy
+ReadWritePaths=/var/lib/prometheus/node-exporter
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

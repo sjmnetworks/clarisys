@@ -1,0 +1,15 @@
+{
+  "source": {
+    "ip": "10.221.126.33",
+    "fqdn": ""
+  },
+  "destination": {
+    "ip": "10.221.126.34",
+    "fqdn": ""
+  },
+  "protocol": "tcp",
+  "port": 8081,
+  "interface_in": "VLAN1432",
+  "interface_out": "VLAN102",
+  "action": "query"
+}

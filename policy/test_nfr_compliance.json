@@ -1,0 +1,38 @@
+{
+  "firewall_rules": [
+    {
+      "id": 42,
+      "name": "TRAS to GPU via HTTPS",
+      "action": "accept",
+      "source": {
+        "addresses": ["10.157.26.50"]
+      },
+      "destination": {
+        "addresses": ["10.221.126.34"]
+      },
+      "services": ["HTTPS"],
+      "log": "log_all_sessions",
+      "comments": "Secure encrypted traffic",
+      "encryption_required": true,
+      "tls_version_minimum": "1.2",
+      "is_sensitive_data": true
+    },
+    {
+      "id": 1,
+      "name": "INTRA CORP LAN ZONE",
+      "action": "accept",
+      "source": {
+        "addresses": ["10.0.0.0/8"]
+      },
+      "destination": {
+        "addresses": []
+      },
+      "services": ["ALL"],
+      "log": "no_log",
+      "comments": "Overly permissive rule"
+    }
+  ],
+  "data_flows": [],
+  "cloud_resources": [],
+  "identity_operations": []
+}

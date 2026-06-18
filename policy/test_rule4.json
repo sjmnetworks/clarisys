@@ -1,0 +1,14 @@
+{
+  "source": {
+    "ip": "10.157.26.50",
+    "fqdn": ""
+  },
+  "destination": {
+    "ip": "10.221.126.34",
+    "fqdn": ""
+  },
+  "protocol": "tcp",
+  "port": 443,
+  "interface_in": "SDWAN.CORP-WAN",
+  "interface_out": "VLAN1432"
+}

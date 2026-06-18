@@ -1,0 +1,23 @@
+{
+  "scenario": "PCI-DSS Payment System Test",
+  "description": "Payment system traffic - should flag PCI-DSS requirements",
+  "source": {
+    "ip": "10.50.1.100",
+    "fqdn": "pos-terminal-1.store.marksandspencer.com"
+  },
+  "destination": {
+    "ip": "178.21.210.135",
+    "fqdn": "gsc.verifone.cloud"
+  },
+  "protocol": "tcp",
+  "port": 443,
+  "interface_in": "VLAN1432",
+  "interface_out": "SDWAN.CORP-WAN",
+  "expected_result": {
+    "allow": true,
+    "compliance_standards": ["PCI_DSS", "ISO_27001", "NIST_CSF"],
+    "security_level": 4,
+    "warnings": [],
+    "data_classification": "RESTRICTED"
+  }
+}

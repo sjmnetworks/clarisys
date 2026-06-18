@@ -1,0 +1,34 @@
+# Keep the image small and free of secrets / dev artefacts.
+.git
+.github
+.gitignore
+.vscode
+.venv
+.pytest_cache
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Docs / decks / reports — not needed in the runtime image
+board-deck.html
+board-pack.html
+templates/README.md
+templates/board-deck-template.html
+README.md
+NFR_COMPLIANCE_GUIDE.md
+compliance-report.md
+*.pdf
+*.xlsx
+*.csv
+
+# Local test scaffolding
+tests/
+tools/
+generate_data.py
+start_api.sh
+
+# OS noise
+.DS_Store
+Thumbs.db

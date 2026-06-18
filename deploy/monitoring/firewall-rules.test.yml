@@ -1,0 +1,127 @@
+rule_files:
+  - firewall-rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: FirewallApiErrorRateHigh fires on sustained 5% error rate
+    interval: 1m
+    input_series:
+      - series: 'firewall_requests_total{job="firewall-api-slo"}'
+        values: '0+100x60'
+      - series: 'firewall_requests_error{job="firewall-api-slo"}'
+        values: '0+5x60'
+      - series: 'up{job="firewall-api-slo"}'
+        values: '1+0x60'
+      - series: 'up{job="firewall-api-alerts"}'
+        values: '1+0x60'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: FirewallApiErrorRateHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: FirewallApiErrorRateHigh
+              severity: critical
+              service: firewall-policy-api
+            exp_annotations:
+              summary: Firewall API error rate is high
+              description: 5m error rate is 5% (> 3%).
+              runbook_url: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapierrorratehigh
+              dashboard_url: http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring
+
+  - name: FirewallApiErrorRateHigh does not fire below threshold
+    interval: 1m
+    input_series:
+      - series: 'firewall_requests_total{job="firewall-api-slo"}'
+        values: '0+100x60'
+      - series: 'firewall_requests_error{job="firewall-api-slo"}'
+        values: '0+1x60'
+      - series: 'up{job="firewall-api-slo"}'
+        values: '1+0x60'
+      - series: 'up{job="firewall-api-alerts"}'
+        values: '1+0x60'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: FirewallApiErrorRateHigh
+        exp_alerts: []
+
+  - name: FirewallApiScrapeDown fires when scrape jobs are down
+    interval: 1m
+    input_series:
+      - series: 'up{job="firewall-api-slo"}'
+        values: '0+0x30'
+      - series: 'up{job="firewall-api-alerts"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: FirewallApiScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: FirewallApiScrapeDown
+              severity: critical
+              service: firewall-policy-api
+            exp_annotations:
+              summary: Firewall API scrape target down
+              description: One or more firewall-api scrape targets are down.
+              runbook_url: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts
+              dashboard_url: http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring
+
+  - name: FirewallCanaryFailed fires immediately when any probe fails
+    interval: 1m
+    input_series:
+      - series: 'firewall_canary_pass{probe="known_good"}'
+        values: '1+0x10'
+      - series: 'firewall_canary_pass{probe="known_deny"}'
+        values: '0+0x10'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: FirewallCanaryFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: FirewallCanaryFailed
+              severity: critical
+              service: firewall-policy-api
+            exp_annotations:
+              summary: Synthetic canary probe failed (wrong verdict)
+              description: |
+                firewall_canary_pass dropped to 0 for at least one probe.
+                A known-good request returned DENY or a known-deny returned ACCEPTABLE.
+                This indicates a policy regression or OPA data-plane failure.
+                Check:
+                  python3 tools/canary_probe.py
+                  journalctl -u opa-api-canary.service -n 20
+              runbook_url: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallalertenginecritical--firewallalertenginewarning
+              dashboard_url: http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring
+
+  - name: Recording rules compute error rate and request volume
+    interval: 1m
+    input_series:
+      - series: 'firewall_requests_total{job="firewall-api-slo"}'
+        values: '0+100x60'
+      - series: 'firewall_requests_error{job="firewall-api-slo"}'
+        values: '0+5x60'
+    promql_expr_test:
+      - expr: firewall:request_error_rate_5m
+        eval_time: 20m
+        exp_samples:
+          - labels: 'firewall:request_error_rate_5m{}'
+            value: 0.05
+      - expr: firewall:request_volume_rps_5m
+        eval_time: 20m
+        exp_samples:
+          - labels: 'firewall:request_volume_rps_5m{}'
+            value: 1.6666666666666667
+
+  - name: Recording rule service up uses minimum target health
+    interval: 1m
+    input_series:
+      - series: 'up{job="firewall-api-slo"}'
+        values: '1+0x30'
+      - series: 'up{job="firewall-api-alerts"}'
+        values: '0+0x30'
+    promql_expr_test:
+      - expr: firewall:service_up
+        eval_time: 10m
+        exp_samples:
+          - labels: 'firewall:service_up{}'
+            value: 0

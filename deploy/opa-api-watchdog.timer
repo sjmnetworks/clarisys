@@ -1,0 +1,14 @@
+[Unit]
+Description=Run opa-api-watchdog every 5 minutes
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Timer]
+# Fire 2 min after boot so the API has time to settle, then every 5 minutes.
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=opa-api-watchdog.service
+
+[Install]
+WantedBy=timers.target

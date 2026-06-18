@@ -1,0 +1,8 @@
+{
+  "bands": {
+    "LOW": 25,
+    "MEDIUM": 50,
+    "HIGH": 75,
+    "CRITICAL": 100
+  }
+}

@@ -1,0 +1,21 @@
+[Unit]
+Description=Open Policy Agent server (request standards policy)
+After=network.target
+Before=opa-api.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+# Adjust the policy paths to where the policy/ directory is deployed.
+ExecStart=/usr/local/bin/opa run --server \
+    --addr 127.0.0.1:8181 \
+    --log-level error \
+    /opt/opa-api/app/policy/request_standards.rego \
+    /opt/opa-api/app/policy/request_standards_batch.rego
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+[Unit]
+Description=Daily backup of policy/decision_history.jsonl (gzip + retention)
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/OPA-policymodule
+
+# Defaults can be overridden by /etc/opa-api/decision-history-backup.env if present.
+EnvironmentFile=-/etc/opa-api/decision-history-backup.env
+
+ExecStart=/usr/bin/python3 /home/ubuntu/OPA-policymodule/tools/backup_decision_history.py \
+    --source /home/ubuntu/OPA-policymodule/policy/decision_history.jsonl \
+    --backup-dir /home/ubuntu/.firewall-api/backups/decision-history \
+    --retention-days 14
+
+# Resource caps so the backup can never wedge the box.
+MemoryMax=128M
+CPUQuota=20%
+
+# Hardening
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/.firewall-api/backups /var/lib/prometheus/node-exporter
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

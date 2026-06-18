@@ -1,0 +1,20 @@
+fastapi>=0.115.0
+email-validator>=2.1.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+pytest>=8.2.0
+# Keep TestClient path on the stable httpx 0.x line until explicit httpx2 migration.
+httpx>=0.27.0,<1.0.0
+pyjwt[crypto]>=2.13.0
+structlog>=24.1.0
+cryptography>=42.0.0
+boto3>=1.28.0
+redis>=5.0.0
+prometheus-client>=0.19.0
+openpyxl>=3.1.5
+python-multipart>=0.0.9
+markdown>=3.6
+# Pinned for security only: fastapi pulls starlette transitively;
+# 1.0.0 has PYSEC-2026-161, 1.0.1 patches it. Floor stays here so a
+# fastapi minor that re-pins to <1.0.1 would still resolve safely.
+starlette>=1.0.1

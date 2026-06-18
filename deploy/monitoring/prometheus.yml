@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - firewall-rules.yml
+
+scrape_configs:
+  - job_name: firewall-api-slo
+    metrics_path: /metrics/slo
+    params:
+      format: [prometheus]
+    static_configs:
+      - targets: ['127.0.0.1:8001']
+
+  - job_name: firewall-api-alerts
+    metrics_path: /metrics/alerts
+    params:
+      format: [prometheus]
+    static_configs:
+      - targets: ['127.0.0.1:8001']
+
+  - job_name: firewall-api-roi
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['127.0.0.1:8001']
+
+  # node-exporter scrapes /var/lib/prometheus/node-exporter/*.prom via
+  # the textfile collector. The opa-api-watchdog timer writes
+  # firewall-watchdog-<unit>.prom there each run, exposing
+  # firewall_watchdog_last_run_timestamp_seconds (consumed by
+  # FirewallWatchdogStale) and firewall_watchdog_last_run_healthy
+  # (consumed by FirewallWatchdogReportsUnhealthy).
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+
+# If auth is enabled, configure one of these per job:
+# bearer_token_file: /etc/prometheus/secrets/firewall-api.token
+# authorization:
+#   type: Bearer
+#   credentials_file: /etc/prometheus/secrets/firewall-api.token

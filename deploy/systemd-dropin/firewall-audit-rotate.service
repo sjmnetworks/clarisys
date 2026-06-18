@@ -1,0 +1,13 @@
+[Unit]
+Description=Rotate firewall audit logs (delete logs older than 90 days)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/find /var/log/firewall-audit/ -name 'audit-*.jsonl.gz' -mtime +90 -delete
+ExecStart=/usr/bin/find /var/log/firewall-audit/ -name 'audit-*.jsonl' -mtime +90 -delete
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

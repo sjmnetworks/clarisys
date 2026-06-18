@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OPA Policy Automation — ROI & Business Case</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --primary: #1a472a;        /* dark forest green - business/ROI theme */
+    --primary-light: #2d5f3f;
+    --accent: #d4a017;         /* gold - premium feel */
+    --accent-light: #e8b923;
+    --success: #00703c;        /* original green for positive metrics */
+    --neutral: #595959;
+    --bg-dark: #0f1419;
+    --bg-light: #f8f9fa;
+    --border: #e5e5e5;
+    --text-dark: #1a1a1a;
+    --text-light: #666666;
+  }
+
+  * { box-sizing: border-box; }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--text-dark);
+    background: var(--bg-dark);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 32px;
+  }
+
+  .header h1 {
+    margin: 0 0 8px 0;
+    font-size: 32px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .header p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 16px;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  .metric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--primary);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+
+  .metric-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 4px 0;
+  }
+
+  .metric-delta {
+    font-size: 13px;
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .section {
+    margin-bottom: 48px;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 24px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .comparison-table {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+  }
+
+  .comparison-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .comparison-table th {
+    background: var(--primary);
+    color: white;
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .comparison-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .comparison-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comparison-table tr:nth-child(even) {
+    background: var(--bg-light);
+  }
+
+  .metric-emphasis {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .breakdown-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .breakdown-card {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .breakdown-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--primary);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 12px;
+  }
+
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .breakdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .breakdown-label {
+    color: var(--text-light);
+    font-weight: 500;
+  }
+
+  .breakdown-value {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .callout {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px 0;
+    border-left: 4px solid var(--accent);
+  }
+
+  .callout h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .callout p {
+    margin: 0;
+    line-height: 1.6;
+    font-size: 14px;
+    opacity: 0.95;
+  }
+
+  .footer {
+    text-align: center;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    color: var(--text-light);
+    font-size: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .metric-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .breakdown-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+      font-size: 24px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <!-- Header -->
+  <div class="header">
+    <h1>OPA Firewall Policy Automation</h1>
+    <p>Return on Investment & Business Case Analysis</p>
+  </div>
+
+  <!-- Key Metrics Overview -->
+  <div class="section">
+    <h2 class="section-title">Key Metrics Overview</h2>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">HIPS Reduction per Rule</div>
+        <div class="metric-value">21</div>
+        <div class="metric-delta">from 24 to 3 humans in process</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Hours Saved per Rule</div>
+        <div class="metric-value">42</div>
+        <div class="metric-delta">21 HIPS × 2 hours each</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Cost Saved per Rule</div>
+        <div class="metric-value">£1,010</div>
+        <div class="metric-delta">42 hours @ £24.04/hour</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Annual Savings (100 rules)</div>
+        <div class="metric-value">£100,960</div>
+        <div class="metric-delta">100 rules × £1,010 each</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive Summary -->
+  <div class="callout">
+    <h3>Executive Summary</h3>
+    <p>
+      The OPA Firewall Policy Automation platform reduces manual intervention from 24 to 3 humans per firewall rule,
+      yielding <span class="metric-emphasis">£1,010 cost savings per rule</span> and freeing up
+      <span class="metric-emphasis">42 hours</span> of skilled staff time per rule processed. At baseline processing of 100 rules annually,
+      this represents <span class="metric-emphasis">£100,960 in annual operational savings</span> and enables redeployment of 21 FTEs
+      to higher-value activities.
+    </p>
+  </div>
+
+  <!-- Current vs New Process -->
+  <div class="section">
+    <h2 class="section-title">Process Comparison</h2>
+    <div class="comparison-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current Manual Process</th>
+            <th>OPA Automated Process</th>
+            <th>Delta (Improvement)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Humans in Process per Rule</strong></td>
+            <td>24 FTEs</td>
+            <td>3 FTEs</td>
+            <td class="metric-emphasis">21 FTEs freed (88% reduction)</td>
+          </tr>
+          <tr>
+            <td><strong>Hours per Rule</strong></td>
+            <td>48 hours (24 × 2h)</td>
+            <td>6 hours (3 × 2h)</td>
+            <td class="metric-emphasis">42 hours saved (88% reduction)</td>
+          </tr>
+          <tr>
+            <td><strong>Cost per Rule</strong></td>
+            <td>£1,152</td>
+            <td>£144</td>
+            <td class="metric-emphasis">£1,010 saved per rule (88% reduction)</td>
+          </tr>
+          <tr>
+            <td><strong>Processing Time</strong></td>
+            <td>48 staff-hours</td>
+            <td>6 staff-hours</td>
+            <td class="metric-emphasis">87.5% faster</td>
+          </tr>
+          <tr>
+            <td><strong>Parallelization</strong></td>
+            <td>Sequential (weeks)</td>
+            <td>Bulk streaming (hours)</td>
+            <td class="metric-emphasis">Real-time processing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scenario Analysis -->
+  <div class="section">
+    <h2 class="section-title">Scenario Analysis</h2>
+    <div class="breakdown-cards">
+      <!-- Single Rule -->
+      <div class="breakdown-card">
+        <h3>📋 Single Rule Processing</h3>
+        <div class="breakdown-item">
+          <span class="breakdown-label">HIPS Freed</span>
+          <span class="breakdown-value">21</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Hours Saved</span>
+          <span class="breakdown-value">42 h</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Cost Saved</span>
+          <span class="breakdown-value">£1,010</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Labor Days Freed</span>
+          <span class="breakdown-value">5.25 days</span>
+        </div>
+      </div>
+
+      <!-- Bulk (10 rules) -->
+      <div class="breakdown-card">
+        <h3>📊 Bulk Operation (10 Rules)</h3>
+        <div class="breakdown-item">
+          <span class="breakdown-label">HIPS Freed</span>
+          <span class="breakdown-value">210</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Hours Saved</span>
+          <span class="breakdown-value">420 h</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Cost Saved</span>
+          <span class="breakdown-value">£10,097</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">FTEs Freed (per batch)</span>
+          <span class="breakdown-value">0.2 FTE</span>
+        </div>
+      </div>
+
+      <!-- Annual (100 rules) -->
+      <div class="breakdown-card">
+        <h3>📈 Annual Baseline (100 Rules)</h3>
+        <div class="breakdown-item">
+          <span class="breakdown-label">HIPS Freed</span>
+          <span class="breakdown-value">2,100</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Hours Saved</span>
+          <span class="breakdown-value">4,200 h</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Cost Saved</span>
+          <span class="breakdown-value">£100,960</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">FTEs Redeployed</span>
+          <span class="breakdown-value">~21 FTEs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cost-Benefit Assumptions -->
+  <div class="section">
+    <h2 class="section-title">Methodology & Assumptions</h2>
+    <div class="comparison-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+            <th>Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Current HIPS</strong></td>
+            <td>24</td>
+            <td>Baseline manual review process requires 24 people per rule</td>
+          </tr>
+          <tr>
+            <td><strong>New HIPS</strong></td>
+            <td>3</td>
+            <td>Automated validation + 3-person approval gate (minimal human touch)</td>
+          </tr>
+          <tr>
+            <td><strong>Average Salary</strong></td>
+            <td>£50,000 PA</td>
+            <td>Industry standard for policy/compliance specialists</td>
+          </tr>
+          <tr>
+            <td><strong>Hourly Rate</strong></td>
+            <td>£24.04</td>
+            <td>£50,000 ÷ 2,080 working hours per annum</td>
+          </tr>
+          <tr>
+            <td><strong>Time per Rule</strong></td>
+            <td>2 hours</td>
+            <td>Average manual review & testing time per HIP per rule</td>
+          </tr>
+          <tr>
+            <td><strong>Annual Rules</strong></td>
+            <td>100</td>
+            <td>Conservative baseline; scales linearly with volume</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scaling Scenarios -->
+  <div class="section">
+    <h2 class="section-title">Scaling Impact</h2>
+    <div class="comparison-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Annual Rules</th>
+            <th>Cost Savings</th>
+            <th>Hours Freed</th>
+            <th>FTEs Redeployed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>25 rules</td>
+            <td>£25,240</td>
+            <td>1,050 h</td>
+            <td>5.3 FTE</td>
+          </tr>
+          <tr>
+            <td>50 rules</td>
+            <td>£50,480</td>
+            <td>2,100 h</td>
+            <td>10.6 FTE</td>
+          </tr>
+          <tr>
+            <td><strong>100 rules (baseline)</strong></td>
+            <td><strong class="metric-emphasis">£100,960</strong></td>
+            <td><strong class="metric-emphasis">4,200 h</strong></td>
+            <td><strong class="metric-emphasis">21.0 FTE</strong></td>
+          </tr>
+          <tr>
+            <td>200 rules</td>
+            <td>£201,920</td>
+            <td>8,400 h</td>
+            <td>42.0 FTE</td>
+          </tr>
+          <tr>
+            <td>500 rules</td>
+            <td>£504,800</td>
+            <td>21,000 h</td>
+            <td>105.0 FTE</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>ROI Dashboard · OPA Firewall Policy Automation · Last Updated: <span id="timestamp"></span></p>
+  </div>
+</div>
+
+<script>
+  // Set current timestamp
+  document.getElementById('timestamp').textContent = new Date().toLocaleString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'UTC'
+  }) + ' UTC';
+</script>
+
+</body>
+</html>

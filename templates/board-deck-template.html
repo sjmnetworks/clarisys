@@ -1,0 +1,787 @@
+<!--
+  M&S Board Deck Template
+  -----------------------
+  A reusable, single-file HTML slide deck in M&S branding.
+
+  How to use:
+    1. Copy this file to a new name, e.g. `board-deck-<topic>-<yyyy-mm-dd>.html`.
+    2. Replace every {{PLACEHOLDER}} below.
+    3. Add or remove <section class="slide"> blocks as needed and renumber the
+       footer counters (X / N).
+    4. Open in a browser. Click "Present" (or press P) for full-screen mode.
+       Click "Print" (or Cmd/Ctrl+P) to export to PDF — one slide per A4 landscape page.
+
+  Brand notes:
+    - Primary green: #00A862  (header stripe, accents)
+    - Dark green:    #00703C  (h3 / dark-green tone)
+    - Deep green:    #004C2A  (table headers, h2, closing slide)
+    - RAG: green #00703C / amber #C98A00 / red #B3261E
+
+  Slide types in this template:
+    1.  Title slide (gradient background, status pill, meta grid)
+    2.  Headline + KPI tiles (3 numbers)
+    3.  Business impact (2-card "Time / Money" panel — keep this — drives ROI story)
+    4.  Narrative bullets ("What we built")
+    5.  Concept / guardrail (4-card panel)
+    6.  Evidence table
+    7.  Goals table
+    8.  Delivery timeline table (with critical-path callout)
+    9.  Status / RAG table
+    10. RAID table
+    11. Decision ask bullets
+    12. Closing slide (deep-green background)
+
+  Keyboard (when presenting):
+    P / click Present  — toggle presenter mode
+    ← / →, Space, PgUp/PgDn — navigate
+    Home / End — first / last slide
+    Esc — exit presenter mode
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>{{DECK_TITLE}} — M&amp;S Board Deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* M&S master brand palette (marksandspencer.com): monochrome black & white,
+     light-grey surfaces, RAG kept for semantic status only. Variable names
+     retained so existing decks built from this template stay consistent. */
+  :root {
+    --ms-green: #000000;          /* primary accent (was green) */
+    --ms-green-dark: #1a1a1a;     /* near-black for headings / hover */
+    --ms-green-deep: #000000;     /* deep accent (table headers, closing) */
+    --ms-ink: #111111;
+    --ms-grey: #595959;
+    --ms-rule: #e5e5e5;
+    --ms-bg-soft: #f5f5f5;
+    --rag-green: #00703C;
+    --rag-amber: #C98A00;
+    --rag-red:   #B3261E;
+    --slide-w: 1280px;
+    --slide-h: 720px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ms-ink);
+    background: #1f1f1f;
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 0 80px 0;
+  }
+  .slide {
+    position: relative;
+    width: var(--slide-w);
+    height: var(--slide-h);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 64px 72px 64px;
+  }
+  .slide::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    background: var(--ms-green);
+  }
+  .brand {
+    position: absolute;
+    top: 22px;
+    left: 64px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand .mark {
+    height: 30px;
+    padding: 0 2px;
+    background: transparent;
+    color: #000000;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 19pt;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .brand .lockup { display: flex; flex-direction: column; line-height: 1.1; }
+  .brand .lockup .name {
+    font-weight: 700;
+    color: var(--ms-green-deep);
+    font-size: 11pt;
+    letter-spacing: 0.02em;
+  }
+  .brand .lockup .sub {
+    font-size: 8.5pt;
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .slide-footer {
+    position: absolute;
+    bottom: 22px;
+    left: 64px;
+    right: 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    color: var(--ms-grey);
+    border-top: 2px solid var(--ms-green);
+    padding-top: 8px;
+  }
+  .slide-footer .footer-mark {
+    color: #000000;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: -0.04em;
+  }
+  .slide-num { color: var(--ms-grey); font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10pt;
+    color: var(--ms-green-dark);
+    margin: 56px 0 6px 0;
+  }
+  h1.title {
+    font-size: 40pt;
+    line-height: 1.05;
+    margin: 8px 0 16px 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ms-ink);
+    max-width: 1000px;
+  }
+  h2.section {
+    font-size: 26pt;
+    margin: 56px 0 14px 0;
+    font-weight: 700;
+    color: var(--ms-green-deep);
+    letter-spacing: -0.005em;
+  }
+  h2.section .num {
+    color: var(--ms-green);
+    margin-right: 12px;
+    font-weight: 800;
+  }
+  .lead { font-size: 15pt; line-height: 1.45; max-width: 1080px; }
+  .body { font-size: 13pt; line-height: 1.5; }
+  .body ul { margin: 4px 0 0 22px; padding: 0; }
+  .body li { margin: 6px 0; }
+  .small { font-size: 10pt; color: var(--ms-grey); }
+
+  .pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    vertical-align: middle;
+  }
+  .pill.amber { background: var(--rag-amber); }
+  .pill.green { background: var(--rag-green); }
+  .pill.red   { background: var(--rag-red); }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 10px;
+  }
+  .kpi {
+    background: var(--ms-bg-soft);
+    border-left: 6px solid var(--ms-green);
+    padding: 18px 20px;
+  }
+  .kpi .num {
+    font-size: 34pt;
+    font-weight: 800;
+    color: var(--ms-green-deep);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .kpi .label {
+    margin-top: 8px;
+    font-size: 11pt;
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .kpi .sub { margin-top: 6px; font-size: 11pt; color: var(--ms-ink); }
+
+  .impact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 12px;
+  }
+  .impact-card {
+    border: 1px solid #000000;
+    border-left: 8px solid #000000;
+    background: var(--ms-bg-soft);
+    padding: 22px 26px;
+  }
+  .impact-card .tag {
+    text-transform: uppercase;
+    font-size: 10pt;
+    letter-spacing: 0.16em;
+    color: var(--ms-green-deep);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .impact-card h3 {
+    font-size: 18pt;
+    margin: 0 0 10px 0;
+    color: var(--ms-ink);
+    font-weight: 700;
+  }
+  .impact-card p { margin: 0; font-size: 12.5pt; line-height: 1.5; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 11.5pt;
+  }
+  th, td {
+    border: 1px solid var(--ms-rule);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--ms-green-deep);
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  tbody tr:nth-child(even) td { background: var(--ms-bg-soft); }
+  td.rag-g { background: #e3f1ea !important; }
+  td.rag-a { background: #fbf1dc !important; }
+  td.rag-r { background: #f7e1df !important; }
+
+  .slide.title-slide {
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, var(--ms-bg-soft) 100%);
+  }
+  .slide.title-slide .meta {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 130px 1fr 130px 1fr;
+    gap: 8px 18px;
+    max-width: 980px;
+    font-size: 12pt;
+  }
+  .slide.title-slide .meta .label {
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 9.5pt;
+  }
+  .badge-bar {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .slide.closing {
+    background: var(--ms-green-deep);
+    color: #ffffff;
+  }
+  .slide.closing::before { background: #ffffff; }
+  .slide.closing .brand .mark { background: transparent; color: #ffffff; }
+  .slide.closing .brand .lockup .name { color: #ffffff; }
+  .slide.closing .brand .lockup .sub { color: #b8b8b8; }
+  .slide.closing h1.title { color: #ffffff; }
+  .slide.closing .lead { color: #ececec; }
+  .slide.closing .slide-footer { color: #b8b8b8; border-top-color: #ffffff; }
+  .slide.closing .slide-footer .footer-mark { color: #ffffff; }
+
+  /* Print: 1 slide per A4 landscape page, hide deck chrome */
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    body { background: #ffffff; }
+    .deck { padding: 0; gap: 0; }
+    .slide {
+      box-shadow: none;
+      page-break-after: always;
+      width: 297mm;
+      height: 209.5mm;
+      padding: 18mm 22mm 22mm 22mm;
+    }
+    .slide:last-child { page-break-after: auto; }
+    .controls { display: none !important; }
+  }
+
+  /* Presenter mode (one slide at a time, fullscreen) */
+  body.present { background: #000; overflow: hidden; }
+  body.present .deck { padding: 0; gap: 0; }
+  body.present .slide { display: none; }
+  body.present .slide.active {
+    display: flex;
+    transform-origin: top left;
+    box-shadow: none;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11pt;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 1000;
+  }
+  .controls button {
+    background: var(--ms-green);
+    color: #fff;
+    border: 0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+  .controls button:hover { background: var(--ms-green-dark); }
+  .controls .hint { color: #b8b8b8; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button id="presentBtn" title="Toggle presenter mode (P)">Present</button>
+  <button id="printBtn" title="Print / save as PDF">Print</button>
+  <span class="hint">← / → to navigate &middot; P to present &middot; Esc to exit</span>
+</div>
+
+<!--
+  Reusable brand row + footer snippets (copy into each slide):
+
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup">
+        <span class="name">Marks &amp; Spencer</span>
+        <span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>{{SLIDE_LABEL}}</span>
+      <span class="slide-num">{{N}} / {{TOTAL}}</span>
+    </div>
+-->
+
+<div class="deck" id="deck">
+
+  <!-- 1. TITLE SLIDE -->
+  <section class="slide title-slide" data-slide="1">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup">
+        <span class="name">Marks &amp; Spencer</span>
+        <span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      </div>
+    </div>
+    <div class="eyebrow">{{EYEBROW e.g. Board Pack &middot; Security Steerco}}</div>
+    <h1 class="title">{{DECK_TITLE}}<br/><span style="color:var(--ms-green-dark); font-size:24pt; font-weight:600;">{{SUBTITLE e.g. Executive Briefing}}</span></h1>
+    <div class="badge-bar">
+      <!-- Status pill: change class to green / amber / red as appropriate -->
+      <span class="pill amber">STATUS &middot; {{RAG e.g. AMBER}}</span>
+      <span class="small">{{ONE_LINE_STATUS_NOTE}}</span>
+    </div>
+    <div class="meta">
+      <div class="label">Audience</div><div>{{AUDIENCE}}</div>
+      <div class="label">Date</div><div>{{DATE}}</div>
+      <div class="label">Decision</div><div>{{DECISION_HEADLINE}}</div>
+      <div class="label">Scope</div><div>{{SCOPE_ONE_LINE}}</div>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>{{DECK_TITLE}} &mdash; Board Deck</span>
+      <span class="slide-num">1 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 2. HEADLINE + KPI TILES -->
+  <section class="slide" data-slide="2">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">01</span>Headline</h2>
+    <p class="lead">
+      {{ONE_PARAGRAPH_HEADLINE — what we did, for whom, against which standards, and the headline result.}}
+    </p>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="num">{{KPI_1_NUMBER}}</div>
+        <div class="label">{{KPI_1_LABEL}}</div>
+        <div class="sub">{{KPI_1_SUB}}</div>
+      </div>
+      <div class="kpi">
+        <div class="num">{{KPI_2_NUMBER}}</div>
+        <div class="label">{{KPI_2_LABEL}}</div>
+        <div class="sub">{{KPI_2_SUB}}</div>
+      </div>
+      <div class="kpi">
+        <div class="num">{{KPI_3_NUMBER}}</div>
+        <div class="label">{{KPI_3_LABEL}}</div>
+        <div class="sub">{{KPI_3_SUB}}</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:18px;">{{HEADLINE_FOOTNOTE optional}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Headline</span>
+      <span class="slide-num">2 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 3. BUSINESS IMPACT — TIME & MONEY (the ROI slide; keep) -->
+  <section class="slide" data-slide="3">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">02</span>Business impact &mdash; highest ROI</h2>
+    <p class="lead">{{IMPACT_ONE_LINE — the two outcomes that drive most of the value.}}</p>
+    <div class="impact-grid">
+      <div class="impact-card">
+        <div class="tag">Time</div>
+        <h3>{{IMPACT_TIME_HEADLINE}}</h3>
+        <p>{{IMPACT_TIME_DETAIL — quantify the saving and what it unlocks.}}</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">Money</div>
+        <h3>{{IMPACT_MONEY_HEADLINE}}</h3>
+        <p>{{IMPACT_MONEY_DETAIL — quantify exposure avoided or revenue protected.}}</p>
+      </div>
+    </div>
+    <p class="small" style="margin-top:18px;">{{IMPACT_FOOTNOTE — note any baseline / model assumptions.}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Business impact</span>
+      <span class="slide-num">3 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 4. NARRATIVE BULLETS — "What we built" / "What we did" -->
+  <section class="slide" data-slide="4">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">03</span>{{NARRATIVE_TITLE e.g. What we built}}</h2>
+    <div class="body">
+      <ul>
+        <li><strong>{{POINT_1_HEAD}}.</strong> {{POINT_1_BODY}}</li>
+        <li><strong>{{POINT_2_HEAD}}.</strong> {{POINT_2_BODY}}</li>
+        <li><strong>{{POINT_3_HEAD}}.</strong> {{POINT_3_BODY}}</li>
+        <li><strong>{{POINT_4_HEAD}}.</strong> {{POINT_4_BODY}}</li>
+        <li><strong>{{POINT_5_HEAD}}.</strong> {{POINT_5_BODY}}</li>
+      </ul>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>{{NARRATIVE_TITLE}}</span>
+      <span class="slide-num">4 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 5. CONCEPT / 4-CARD PANEL (e.g. "How X acts as a guardrail") -->
+  <section class="slide" data-slide="5">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">04</span>{{CONCEPT_TITLE}}</h2>
+    <p class="lead">{{CONCEPT_INTRO — one sentence framing the four cards below.}}</p>
+    <div class="impact-grid" style="grid-template-columns: 1fr 1fr; gap:18px;">
+      <div class="impact-card">
+        <div class="tag">{{CARD_1_TAG}}</div>
+        <h3>{{CARD_1_HEAD}}</h3>
+        <p>{{CARD_1_BODY}}</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">{{CARD_2_TAG}}</div>
+        <h3>{{CARD_2_HEAD}}</h3>
+        <p>{{CARD_2_BODY}}</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">{{CARD_3_TAG}}</div>
+        <h3>{{CARD_3_HEAD}}</h3>
+        <p>{{CARD_3_BODY}}</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">{{CARD_4_TAG}}</div>
+        <h3>{{CARD_4_HEAD}}</h3>
+        <p>{{CARD_4_BODY}}</p>
+      </div>
+    </div>
+    <p class="small" style="margin-top:14px;">{{CONCEPT_FOOTNOTE optional}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>{{CONCEPT_TITLE}}</span>
+      <span class="slide-num">5 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 6. EVIDENCE TABLE -->
+  <section class="slide" data-slide="6">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">05</span>{{EVIDENCE_TITLE e.g. Evidence from today's audit}}</h2>
+    <table>
+      <thead>
+        <tr><th style="width:34%">Finding</th><th style="width:18%">Result</th><th>So what</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>{{EV_1_FINDING}}</td><td>{{EV_1_RESULT}}</td><td>{{EV_1_SOWHAT}}</td></tr>
+        <tr><td>{{EV_2_FINDING}}</td><td><span class="pill green">{{EV_2_RESULT}}</span></td><td>{{EV_2_SOWHAT}}</td></tr>
+        <tr><td>{{EV_3_FINDING}}</td><td><span class="pill red">{{EV_3_RESULT}}</span></td><td>{{EV_3_SOWHAT}}</td></tr>
+        <tr><td>{{EV_4_FINDING}}</td><td><span class="pill amber">{{EV_4_RESULT}}</span></td><td>{{EV_4_SOWHAT}}</td></tr>
+        <tr><td>{{EV_5_FINDING}}</td><td>{{EV_5_RESULT}}</td><td>{{EV_5_SOWHAT}}</td></tr>
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:14px;">{{EVIDENCE_FOOTNOTE optional}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Evidence</span>
+      <span class="slide-num">6 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 7. GOALS TABLE -->
+  <section class="slide" data-slide="7">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">06</span>Goals &mdash; {{HORIZON e.g. next 90 days}}</h2>
+    <table>
+      <thead>
+        <tr><th style="width:6%">#</th><th style="width:34%">Goal</th><th style="width:24%">KPI / Measure</th><th style="width:18%">Target</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>G1</td><td>{{G1_GOAL}}</td><td>{{G1_KPI}}</td><td>{{G1_TARGET}}</td><td>{{G1_OWNER}}</td></tr>
+        <tr><td>G2</td><td>{{G2_GOAL}}</td><td>{{G2_KPI}}</td><td>{{G2_TARGET}}</td><td>{{G2_OWNER}}</td></tr>
+        <tr><td>G3</td><td>{{G3_GOAL}}</td><td>{{G3_KPI}}</td><td>{{G3_TARGET}}</td><td>{{G3_OWNER}}</td></tr>
+        <tr><td>G4</td><td>{{G4_GOAL}}</td><td>{{G4_KPI}}</td><td>{{G4_TARGET}}</td><td>{{G4_OWNER}}</td></tr>
+        <tr><td>G5</td><td>{{G5_GOAL}}</td><td>{{G5_KPI}}</td><td>{{G5_TARGET}}</td><td>{{G5_OWNER}}</td></tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Goals</span>
+      <span class="slide-num">7 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 8. DELIVERY TIMELINE TABLE -->
+  <section class="slide" data-slide="8">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">07</span>Delivery timeline</h2>
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>Scope</th><th>Start</th><th>End</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>{{PH0_NAME e.g. Phase 0 — Discovery (complete)}}</td><td>{{PH0_SCOPE}}</td><td>{{PH0_START}}</td><td>{{PH0_END}}</td><td>{{PH0_OWNER}}</td></tr>
+        <tr><td>{{PH1_NAME}}</td><td>{{PH1_SCOPE}}</td><td>{{PH1_START}}</td><td>{{PH1_END}}</td><td>{{PH1_OWNER}}</td></tr>
+        <tr><td>{{PH2_NAME}}</td><td>{{PH2_SCOPE}}</td><td>{{PH2_START}}</td><td>{{PH2_END}}</td><td>{{PH2_OWNER}}</td></tr>
+        <tr><td>{{PH3_NAME}}</td><td>{{PH3_SCOPE}}</td><td>{{PH3_START}}</td><td>{{PH3_END}}</td><td>{{PH3_OWNER}}</td></tr>
+        <tr><td>{{PH4_NAME}}</td><td>{{PH4_SCOPE}}</td><td>{{PH4_START}}</td><td>{{PH4_END}}</td><td>{{PH4_OWNER}}</td></tr>
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:10px;"><strong>Critical path:</strong> {{CRITICAL_PATH_NOTE}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Delivery timeline</span>
+      <span class="slide-num">8 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 9. STATUS / RAG TABLE -->
+  <section class="slide" data-slide="9">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">08</span>Status against plan</h2>
+    <table>
+      <thead>
+        <tr><th style="width:26%">Workstream</th><th style="width:10%">RAG</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>{{WS_1}}</td><td class="rag-g"><span class="pill green">Green</span></td><td>{{WS_1_NOTE}}</td></tr>
+        <tr><td>{{WS_2}}</td><td class="rag-g"><span class="pill green">Green</span></td><td>{{WS_2_NOTE}}</td></tr>
+        <tr><td>{{WS_3}}</td><td class="rag-a"><span class="pill amber">Amber</span></td><td>{{WS_3_NOTE}}</td></tr>
+        <tr><td>{{WS_4}}</td><td class="rag-r"><span class="pill red">Red</span></td><td>{{WS_4_NOTE}}</td></tr>
+        <tr><td>{{WS_5}}</td><td class="rag-a"><span class="pill amber">Amber</span></td><td>{{WS_5_NOTE}}</td></tr>
+        <tr><td>{{WS_6}}</td><td class="rag-a"><span class="pill amber">Amber</span></td><td>{{WS_6_NOTE}}</td></tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Status</span>
+      <span class="slide-num">9 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 10. RAID TABLE -->
+  <section class="slide" data-slide="10">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">09</span>Top risks &amp; dependencies</h2>
+    <table>
+      <thead>
+        <tr><th style="width:11%">Type</th><th style="width:36%">Item</th><th style="width:14%">Impact</th><th>Mitigation / Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Risk</td><td>{{RISK_1}}</td><td>{{RISK_1_IMPACT}}</td><td>{{RISK_1_MITIGATION}}</td></tr>
+        <tr><td>Risk</td><td>{{RISK_2}}</td><td>{{RISK_2_IMPACT}}</td><td>{{RISK_2_MITIGATION}}</td></tr>
+        <tr><td>Risk</td><td>{{RISK_3}}</td><td>{{RISK_3_IMPACT}}</td><td>{{RISK_3_MITIGATION}}</td></tr>
+        <tr><td>Issue</td><td>{{ISSUE_1}}</td><td>{{ISSUE_1_IMPACT}}</td><td>{{ISSUE_1_MITIGATION}}</td></tr>
+        <tr><td>Dependency</td><td>{{DEP_1}}</td><td>{{DEP_1_IMPACT}}</td><td>{{DEP_1_OWNER}}</td></tr>
+        <tr><td>Dependency</td><td>{{DEP_2}}</td><td>{{DEP_2_IMPACT}}</td><td>{{DEP_2_OWNER}}</td></tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>RAID</span>
+      <span class="slide-num">10 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 11. DECISION ASK -->
+  <section class="slide" data-slide="11">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h2 class="section"><span class="num">10</span>Decision ask</h2>
+    <div class="body">
+      <ul>
+        <li><strong>Approve</strong> {{ASK_APPROVE}}.</li>
+        <li><strong>Fund</strong> {{ASK_FUND}}.</li>
+        <li><strong>Mandate</strong> {{ASK_MANDATE}}.</li>
+        <li><strong>Endorse</strong> {{ASK_ENDORSE}}.</li>
+        <li><strong>Nominate</strong> {{ASK_NOMINATE}}.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>Decision ask</span>
+      <span class="slide-num">11 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+  <!-- 12. CLOSING SLIDE -->
+  <section class="slide closing" data-slide="12">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">{{DEPARTMENT}} &middot; {{TEAM}}</span></div>
+    </div>
+    <h1 class="title" style="margin-top:120px;">Thank you</h1>
+    <p class="lead" style="margin-top:14px;">{{CLOSING_LINE_1}}</p>
+    <p class="lead" style="margin-top:36px;"><strong>One sentence:</strong> {{CLOSING_ONE_SENTENCE}}</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;{{DEPARTMENT}} &middot; {{TEAM}}</span>
+      <span>{{DECK_TITLE}} &mdash; Board Deck</span>
+      <span class="slide-num">12 / {{TOTAL}}</span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var idx = 0;
+    var presenting = false;
+
+    function fitSlide() {
+      if (!presenting) {
+        slides.forEach(function (s) { s.style.transform = ''; s.style.width = ''; s.style.height = ''; });
+        return;
+      }
+      var s = slides[idx];
+      if (!s) return;
+      var sw = 1280, sh = 720;
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var scale = Math.min(vw / sw, vh / sh);
+      s.style.transform = 'scale(' + scale + ')';
+      s.style.transformOrigin = 'top left';
+      s.style.position = 'absolute';
+      s.style.top = ((vh - sh * scale) / 2) + 'px';
+      s.style.left = ((vw - sw * scale) / 2) + 'px';
+    }
+
+    function show(i) {
+      idx = Math.max(0, Math.min(slides.length - 1, i));
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === idx); });
+      fitSlide();
+    }
+
+    function enterPresent() {
+      presenting = true;
+      document.body.classList.add('present');
+      show(idx);
+    }
+    function exitPresent() {
+      presenting = false;
+      document.body.classList.remove('present');
+      slides.forEach(function (s) {
+        s.classList.remove('active');
+        s.style.transform = ''; s.style.position = ''; s.style.top = ''; s.style.left = '';
+      });
+    }
+    function togglePresent() { presenting ? exitPresent() : enterPresent(); }
+
+    document.getElementById('presentBtn').addEventListener('click', togglePresent);
+    document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'p' || e.key === 'P') { togglePresent(); }
+      else if (e.key === 'Escape') { if (presenting) exitPresent(); }
+      else if (presenting && (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ')) { e.preventDefault(); show(idx + 1); }
+      else if (presenting && (e.key === 'ArrowLeft' || e.key === 'PageUp')) { e.preventDefault(); show(idx - 1); }
+      else if (presenting && (e.key === 'Home')) { show(0); }
+      else if (presenting && (e.key === 'End')) { show(slides.length - 1); }
+    });
+
+    window.addEventListener('resize', fitSlide);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.venv/
+.tmpvenv/
+.env
+*.log
+.DS_Store
+
+# Local audit inputs/outputs
+Firewall Policy.csv
+compliance-report.md
+
+# Pilot user credential store (real user data + key hashes)
+policy/pilot_users.json
+
+# Runtime governance state
+policy/decision_history.jsonl
+policy/decision_history.jsonl.scrubbed.*
+policy/decision_history.jsonl.reset.*
+policy/decision_lifecycle.json
+
+# Runtime decision history log
+policy/decision_history.jsonl
+
+# Local remote test script and response output (contain live server address + API key)
+tests/remote_bulk_test.py
+tests/remote_bulk_response.json
+

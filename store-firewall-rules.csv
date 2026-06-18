@@ -1,0 +1,95 @@
+source,destination,protocol,port,log,action,rule_name
+10.0.0.0/8,10.0.0.0/8,tcp,0,log_all_sessions,accept,INTRA CORP LAN ZONE
+10.221.0.0/16,10.221.126.33,tcp,0,log_all_sessions,accept,INTERNAL VLAN102-VLAN1432
+10.221.0.0/16,10.221.126.34,tcp,0,log_all_sessions,accept,INTERNAL VLAN102-VLAN1432
+10.221.126.0/24,10.221.0.0/16,tcp,13102,log_all_sessions,accept,VLAN1432 to INTERNAL VLAN102
+10.157.26.0/24,10.221.126.33,tcp,0,log_all_sessions,accept,TRAS to VLAN1432
+10.157.26.0/24,10.221.126.34,tcp,0,log_all_sessions,accept,TRAS to VLAN1432
+10.221.126.0/24,0.0.0.0/0,tcp,0,log_all_sessions,accept,Catch all to Zscaler_1432
+10.221.126.0/24,10.1.1.0/24,udp,53,log_all_sessions,accept,VLAN1432 to STORE DNS SERVER
+10.221.126.0/24,10.1.1.0/24,tcp,53,log_all_sessions,accept,VLAN1432 to STORE DNS SERVER
+10.221.126.0/24,10.250.255.3/32,udp,53,log_all_sessions,accept,VLAN1432 to DNS VIP
+10.221.126.0/24,10.250.255.3/32,tcp,53,log_all_sessions,accept,VLAN1432 to DNS VIP
+10.221.126.0/24,10.221.0.0/16,icmp,0,log_all_sessions,accept,VLAN1432 to VLAN102 ICMP
+10.221.126.0/24,10.141.2.11/32,udp,123,log_all_sessions,accept,VLAN1432 to NTP
+10.221.126.0/24,10.141.2.11/32,tcp,123,log_all_sessions,accept,VLAN1432 to NTP
+10.221.126.0/24,10.96.3.70/32,udp,123,log_all_sessions,accept,VLAN1432 to NTP
+10.221.126.0/24,10.96.3.70/32,tcp,123,log_all_sessions,accept,VLAN1432 to NTP
+10.0.0.0/8,0.0.0.0/0,icmp,0,log_all_sessions,accept,VLAN111 to INTERNAL Infra
+10.0.0.0/8,0.0.0.0/0,udp,53,log_all_sessions,accept,VLAN111 to INTERNAL Infra
+10.0.0.0/8,0.0.0.0/0,tcp,53,log_all_sessions,accept,VLAN111 to INTERNAL Infra
+10.0.0.0/8,0.0.0.0/0,udp,123,log_all_sessions,accept,VLAN111 to INTERNAL Infra
+10.0.0.0/8,0.0.0.0/0,tcp,123,log_all_sessions,accept,VLAN111 to INTERNAL Infra
+10.0.0.0/8,10.159.5.67/32,tcp,0,log_all_sessions,accept,VLAN111 to MITIE
+10.0.0.0/8,10.159.5.68/32,tcp,0,log_all_sessions,accept,VLAN111 to MITIE
+10.159.5.67/32,10.0.0.0/8,tcp,0,log_all_sessions,accept,MITIE to VLAN111
+10.159.5.68/32,10.0.0.0/8,tcp,0,log_all_sessions,accept,MITIE to VLAN111
+10.0.0.0/8,10.0.0.0/8,tcp,0,log_all_sessions,deny,VLAN111 HOSTS to INTERNAL DENY
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,VLAN111 to INTERNAL PERMIT
+10.0.0.0/8,10.250.2.4/32,tcp,80,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.250.2.4/32,tcp,443,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.1.1.0/24,tcp,80,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.1.1.0/24,tcp,443,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.106.1.0/24,tcp,80,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.106.1.0/24,tcp,443,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.50.5.0/24,tcp,80,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.50.5.0/24,tcp,443,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.96.0.0/16,tcp,80,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,10.96.0.0/16,tcp,443,log_all_sessions,accept,VLAN114 HTTPs Endpoints
+10.0.0.0/8,128.134.5.21/32,tcp,21,log_all_sessions,accept,VLAN114 FTP Endpoints
+10.0.0.0/8,128.43.5.30/32,tcp,21,log_all_sessions,accept,VLAN114 FTP Endpoints
+10.0.0.0/8,10.128.0.0/16,tcp,162,log_all_sessions,accept,VLAN114 SNMP-TRAP Endpoints
+10.0.0.0/8,10.96.0.0/16,tcp,162,log_all_sessions,accept,VLAN114 SNMP-TRAP Endpoints
+10.0.0.0/8,10.130.150.30/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.30/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.30/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.30/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.31/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.31/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.31/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.31/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.32/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.32/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.32/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.32/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.33/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.33/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.33/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.33/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.4/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.4/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.4/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.4/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.5/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.5/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.5/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.5/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.6/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.6/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.6/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.6/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.7/32,tcp,18001,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.7/32,tcp,18002,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.7/32,tcp,18017,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.7/32,tcp,18018,log_all_sessions,accept,VLAN114 Other Endpoints
+10.0.0.0/8,10.130.150.34/32,tcp,18049,log_all_sessions,accept,VLAN114 18049 Endpoints
+10.0.0.0/8,10.130.150.8/32,tcp,18049,log_all_sessions,accept,VLAN114 18049 Endpoints
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,VLAN114 Endpoints
+10.0.0.0/8,10.141.2.11/32,tcp,123,log_all_sessions,accept,VLAN114 NTP Endpoints
+10.0.0.0/8,10.141.2.11/32,udp,123,log_all_sessions,accept,VLAN114 NTP Endpoints
+10.0.0.0/8,10.96.3.70/32,tcp,123,log_all_sessions,accept,VLAN114 NTP Endpoints
+10.0.0.0/8,10.96.3.70/32,udp,123,log_all_sessions,accept,VLAN114 NTP Endpoints
+10.0.0.0/8,0.0.0.0/0,udp,67,log_all_sessions,accept,VLAN116 to DHCP Server
+10.0.0.0/8,0.0.0.0/0,udp,68,log_all_sessions,accept,VLAN116 to DHCP Server
+10.0.0.0/8,10.0.0.0/8,tcp,0,log_all_sessions,deny,VLAN116 to M and S
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,VLAN116 to DPDIA
+10.0.0.0/8,10.0.0.0/8,tcp,0,log_all_sessions,accept,10/8 via SDWAN HUB Out
+10.0.0.0/8,10.0.0.0/8,tcp,0,log_all_sessions,accept,10/8 via SDWAN HUB In
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,Apps via DIA
+10.0.0.0/8,91.208.214.0/24,tcp,0,log_all_sessions,accept,Apps via DPDIA
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,Microsoft SaaS via DIA
+10.0.0.0/8,0.0.0.0/0,tcp,0,log_all_sessions,accept,CDNs via DIA
+10.0.0.0/8,0.0.0.0/0,tcp,443,log_all_sessions,accept,VLAN104 to JUNIPER MIST TCP443
+10.0.0.0/8,0.0.0.0/0,tcp,2200,log_all_sessions,accept,VLAN104 to JUNIPER MIST TCP2200
+10.0.0.0/8,0.0.0.0/0,tcp,0,no_log,accept,Catch all to Zscaler
+0.0.0.0/0,0.0.0.0/0,tcp,0,log_all_sessions,deny,Implicit Deny

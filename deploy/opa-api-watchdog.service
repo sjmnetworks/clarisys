@@ -1,0 +1,29 @@
+[Unit]
+Description=OPA-API watchdog (restart-loop / startup health check with Slack alerts)
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/OPA-policymodule
+
+# Reads the Slack webhook URL from /etc/opa-api/ops-kit.env (chmod 600).
+# Example contents:
+#   OPS_KIT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+EnvironmentFile=-/etc/opa-api/ops-kit.env
+
+ExecStart=/usr/bin/python3 /home/ubuntu/OPA-policymodule/tools/ops_kit.py \
+    watchdog \
+    --unit opa-api-8001.service \
+    --failure-threshold 3 \
+    --since-minutes 15 \
+    --alert-slack \
+    --alert-cooldown-minutes 15
+
+# Exit code 2 = unhealthy (handled by alert path), so don't fail the unit.
+SuccessExitStatus=0 2
+
+# Resource caps so the watcher can never wedge the box.
+MemoryMax=128M
+CPUQuota=10%

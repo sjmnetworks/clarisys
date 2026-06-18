@@ -1,0 +1,16 @@
+[Unit]
+Description=Run opa-api-pilot-key-age daily
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Timer]
+# Daily at 04:23 UTC. Off-peak; offset from the top of the hour and from
+# the decision-history-backup timer (03:17) to spread load.
+OnCalendar=*-*-* 04:23:00
+# Catch up if the host was off when the trigger fired (laptop/dev hosts).
+Persistent=true
+AccuracySec=1m
+RandomizedDelaySec=2m
+Unit=opa-api-pilot-key-age.service
+
+[Install]
+WantedBy=timers.target

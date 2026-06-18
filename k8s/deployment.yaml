@@ -1,0 +1,430 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: firewall-api
+  labels:
+    name: firewall-api
+
+---
+# ConfigMap: non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firewall-api-config
+  namespace: firewall-api
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  MAX_REQUEST_BODY_BYTES: "5242880"
+  AUTH_ENABLED: "true"
+  AUDIT_BACKEND: "local"
+  AUDIT_DIR: "/var/log/firewall-audit"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_WINDOW_SECS: "60"
+  RATE_LIMIT_QUOTA_EVALUATE_PER_MIN: "100"
+  RATE_LIMIT_QUOTA_EVALUATE_BULK_PER_MIN: "20"
+  RATE_LIMIT_QUOTA_INTAKE_EVALUATE_PER_MIN: "100"
+  RATE_LIMIT_QUOTA_INTAKE_BULK_PER_MIN: "20"
+  RATE_LIMIT_QUOTA_AUDIT_CSV_PER_MIN: "10"
+  AUDIT_ENCRYPTION_ENABLED: "false"
+  REQUEST_SIGNING_ENABLED: "false"
+  RATE_LIMIT_REDIS_ENABLED: "false"
+
+---
+# ServiceAccount: identity for pod security
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+
+---
+# Role: permissions for firewall-api pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+rules:
+  # Allow read-only access to ConfigMaps and Secrets
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+
+---
+# RoleBinding: bind role to service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: firewall-api
+subjects:
+  - kind: ServiceAccount
+    name: firewall-api
+    namespace: firewall-api
+
+---
+# PersistentVolumeClaim: audit trail storage (optional, local)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: firewall-audit-pvc
+  namespace: firewall-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Use local storage class if available
+  # storageClassName: local-path
+
+---
+# Service: expose firewall-api internally
+apiVersion: v1
+kind: Service
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+  labels:
+    app: firewall-api
+spec:
+  type: ClusterIP
+  selector:
+    app: firewall-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+
+---
+# Deployment: firewall-api application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+  labels:
+    app: firewall-api
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: firewall-api
+  template:
+    metadata:
+      labels:
+        app: firewall-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: firewall-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Init container: prepare volumes
+      initContainers:
+        - name: init-audit-dir
+          image: busybox:1.35
+          command: ["mkdir", "-p", "/var/log/firewall-audit"]
+          volumeMounts:
+            - name: audit-storage
+              mountPath: /var/log/firewall-audit
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+
+      containers:
+        - name: firewall-api
+          image: firewall-api:latest
+          imagePullPolicy: Always
+          
+          # Security context: restrict container capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE  # Only if binding to port < 1024
+          
+          # Environment: load from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: firewall-api-config
+          
+          # Sensitive env vars: load from Secrets
+          env:
+            - name: AUTH_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-api-secrets
+                  key: AUTH_ISSUER
+            - name: AUTH_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-api-secrets
+                  key: AUTH_AUDIENCE
+            - name: AUTH_JWKS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-api-secrets
+                  key: AUTH_JWKS_URL
+            - name: AUDIT_S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-audit-s3
+                  key: ACCESS_KEY_ID
+                  optional: true
+            - name: AUDIT_S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-audit-s3
+                  key: SECRET_ACCESS_KEY
+                  optional: true
+            - name: AUDIT_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-audit-s3
+                  key: BUCKET
+                  optional: true
+          
+          # Ports
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          
+          # Healthchecks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          
+          # Resource limits
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          
+          # Volumes
+          volumeMounts:
+            - name: audit-storage
+              mountPath: /var/log/firewall-audit
+            - name: tmp
+              mountPath: /tmp
+            - name: jwks-cert
+              mountPath: /etc/firewall/certs
+              readOnly: true
+
+      # Volumes
+      volumes:
+        - name: audit-storage
+          persistentVolumeClaim:
+            claimName: firewall-audit-pvc
+        - name: tmp
+          emptyDir: {}
+        - name: jwks-cert
+          configMap:
+            name: firewall-jwks-cert
+            optional: true
+
+      # Pod affinity: spread across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - firewall-api
+                topologyKey: kubernetes.io/hostname
+
+      # Tolerations: allow scheduling on tainted nodes (optional)
+      tolerations: []
+
+      # Restart policy
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+---
+# HorizontalPodAutoscaler: auto-scale based on CPU
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: firewall-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+# NetworkPolicy: restrict traffic to firewall-api
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+spec:
+  podSelector:
+    matchLabels:
+      app: firewall-api
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  # Ingress: allow from ingress controller only
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app: firewall-api  # Pod-to-pod (for internal testing)
+      ports:
+        - protocol: TCP
+          port: 8000
+  
+  # Egress: allow DNS, HTTPS for Entra ID, S3 (if using)
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # HTTPS (Entra ID JWKS, S3)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow to kube-dns
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+# PodDisruptionBudget: ensure min availability during disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: firewall-api
+
+---
+# Ingress: expose firewall-api via HTTPS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: firewall-api
+  namespace: firewall-api
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - firewall-api.example.com
+      secretName: firewall-api-tls
+  rules:
+    - host: firewall-api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: firewall-api
+                port:
+                  number: 8000

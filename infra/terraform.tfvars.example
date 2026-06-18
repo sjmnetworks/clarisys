@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars and fill in values
+aws_region      = "eu-west-2"
+project_name    = "firewall-api"
+domain_name     = ""         # e.g. "firewall-api.yourcompany.com" — leave empty to use ALB DNS
+container_cpu   = 256        # 0.25 vCPU
+container_memory = 512       # MB
+desired_count   = 1
+enable_s3_audit = true

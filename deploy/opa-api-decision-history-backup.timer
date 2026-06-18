@@ -1,0 +1,16 @@
+[Unit]
+Description=Run opa-api-decision-history-backup daily
+Documentation=https://github.com/sjmnetworks/OPA-policymodule
+
+[Timer]
+# Daily at 03:17 UTC. Off-peak; offset from the top of the hour to spread
+# load if other timers fire on the wall clock.
+OnCalendar=*-*-* 03:17:00
+# Catch up if the host was off when the trigger fired (laptop/dev hosts).
+Persistent=true
+AccuracySec=1m
+RandomizedDelaySec=2m
+Unit=opa-api-decision-history-backup.service
+
+[Install]
+WantedBy=timers.target

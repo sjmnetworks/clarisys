@@ -1,0 +1,261 @@
+{
+  "_metadata": {
+    "version": "1.0",
+    "last_updated": "2026-05-15",
+    "description": "Network Security Standards Framework for M&S Stores",
+    "applicable_standards": ["CIS_v8.1", "ISO_27001", "PCI_DSS_v3.2.1", "NIST_CSF"],
+    "note": "Update 'applicable_standards' based on your specific compliance requirements"
+  },
+  
+  "security_principles": {
+    "least_privilege": {
+      "description": "Allow minimum necessary access",
+      "enforcement": "Rules should explicitly define source/dest/service without wildcards"
+    },
+    "defense_in_depth": {
+      "description": "Multiple layers of security controls",
+      "enforcement": "Critical systems require explicit allow rules on multiple interfaces"
+    },
+    "zero_trust": {
+      "description": "Never trust, always verify",
+      "enforcement": "All traffic requires explicit allow rule"
+    },
+    "data_classification": {
+      "description": "Protect based on data sensitivity",
+      "enforcement": "Rules must reference data_level for sensitive systems"
+    }
+  },
+
+  "trust_zones": {
+    "INTERNAL_CORE": {
+      "level": 1,
+      "description": "Highly trusted internal networks (HQ, data centers)",
+      "networks": ["10.0.0.0/8", "128.43.0.0/16", "158.0.0.0/8"],
+      "max_connection_risk": "low",
+      "requires_logging": true,
+      "requires_encryption": false
+    },
+    "STORE_NETWORKS": {
+      "level": 2,
+      "description": "Store POS, VoIP, management networks",
+      "networks": ["Store networks via VLAN"],
+      "max_connection_risk": "medium",
+      "requires_logging": true,
+      "requires_encryption": false
+    },
+    "EXTERNAL_SAAS": {
+      "level": 3,
+      "description": "External SaaS platforms and APIs",
+      "max_connection_risk": "high",
+      "requires_logging": true,
+      "requires_encryption": true
+    },
+    "EXTERNAL_INTERNET": {
+      "level": 4,
+      "description": "General internet (untrusted)",
+      "max_connection_risk": "critical",
+      "requires_logging": true,
+      "requires_encryption": true,
+      "allowed_only_via_proxy": true
+    }
+  },
+
+  "data_classifications": {
+    "PUBLIC": {
+      "level": 1,
+      "description": "Non-sensitive, publicly available",
+      "examples": ["Marketing materials", "General web content"],
+      "min_trust_zone": "EXTERNAL_INTERNET"
+    },
+    "INTERNAL": {
+      "level": 2,
+      "description": "Internal use only, not sensitive",
+      "examples": ["Internal wikis", "Announcements"],
+      "min_trust_zone": "STORE_NETWORKS"
+    },
+    "CONFIDENTIAL": {
+      "level": 3,
+      "description": "Sensitive business data",
+      "examples": ["Store financials", "Employee data"],
+      "min_trust_zone": "STORE_NETWORKS",
+      "requires_encryption": true
+    },
+    "RESTRICTED": {
+      "level": 4,
+      "description": "Highly sensitive, regulated",
+      "examples": ["PCI-DSS payment data", "PII", "Trade secrets"],
+      "min_trust_zone": "INTERNAL_CORE",
+      "requires_encryption": true,
+      "requires_mfa": true,
+      "requires_audit_logging": true
+    }
+  },
+
+  "compliance_requirements": {
+    "PCI_DSS": {
+      "applies_to": ["Payment systems", "Card data", "POS networks"],
+      "requirements": {
+        "encryption_transit": "TLS 1.2+",
+        "encryption_rest": "AES-256",
+        "network_segmentation": "Required",
+        "logging_retention": "1 year",
+        "firewall_rules": "Documented and tested quarterly",
+        "access_control": "Least privilege",
+        "authentication": "Strong credentials + MFA for admin"
+      }
+    },
+    "ISO_27001": {
+      "applies_to": ["All systems"],
+      "requirements": {
+        "access_control": "Based on job function",
+        "encryption": "For sensitive data",
+        "incident_response": "Documented procedures",
+        "security_awareness": "Annual training"
+      }
+    },
+    "NIST_CSF": {
+      "applies_to": ["All systems"],
+      "functions": ["Identify", "Protect", "Detect", "Respond", "Recover"]
+    },
+    "CIS_v8.1": {
+      "applies_to": ["All systems"],
+      "implementation_group": "IG3",
+      "note": "M&S classified as IG3 (mature security program, complex environment)",
+      "network_relevant_controls": {
+        "CIS-4": {
+          "title": "Secure Configuration of Enterprise Assets and Software",
+          "safeguards": [
+            "4.4 - Implement and manage a firewall on servers",
+            "4.5 - Implement and manage a firewall on end-user devices",
+            "4.8 - Uninstall or disable unnecessary services on enterprise assets and software"
+          ],
+          "firewall_requirement": "Rules must be explicitly defined; deny-all default required"
+        },
+        "CIS-6": {
+          "title": "Access Control Management",
+          "safeguards": [
+            "6.3 - Require MFA for externally-exposed applications",
+            "6.4 - Require MFA for remote network access",
+            "6.7 - Centralize access control"
+          ],
+          "firewall_requirement": "Admin and remote access rules must specify MFA requirement"
+        },
+        "CIS-8": {
+          "title": "Audit Log Management",
+          "safeguards": [
+            "8.1 - Establish and maintain an audit log management process",
+            "8.2 - Collect audit logs",
+            "8.5 - Collect detailed audit logs",
+            "8.11 - Conduct audit log reviews"
+          ],
+          "firewall_requirement": "All rules must have log enabled; retain logs >= 90 days (IG3: 1 year)"
+        },
+        "CIS-12": {
+          "title": "Network Infrastructure Management",
+          "safeguards": [
+            "12.1 - Ensure network infrastructure is up-to-date",
+            "12.2 - Establish and maintain a secure network architecture",
+            "12.3 - Securely manage network infrastructure",
+            "12.4 - Establish and maintain architecture diagram(s)",
+            "12.6 - Use of secure network management and communication protocols",
+            "12.7 - Ensure remote devices utilize a VPN and are connecting to an enterprise AAA",
+            "12.8 - Establish and maintain dedicated computing resources for all administrative work"
+          ],
+          "firewall_requirement": "Network segmentation by trust zone; explicit ingress/egress rules per zone"
+        },
+        "CIS-13": {
+          "title": "Network Monitoring and Defense",
+          "safeguards": [
+            "13.1 - Centralize security event alerting",
+            "13.2 - Deploy a host-based intrusion detection solution",
+            "13.3 - Deploy a network intrusion detection solution",
+            "13.4 - Perform traffic filtering between network segments",
+            "13.6 - Collect network traffic flow logs",
+            "13.8 - Deploy a network intrusion prevention solution"
+          ],
+          "firewall_requirement": "All inter-zone traffic must be logged; deny rules must be logged; flow logs retained"
+        }
+      },
+      "requirements": {
+        "logging": "All firewall rules must log; logs retained minimum 1 year (IG3)",
+        "segmentation": "Network segmentation required between trust zones",
+        "default_deny": "Implicit deny-all; only explicitly permitted traffic allowed",
+        "rule_review": "Firewall rules reviewed quarterly (IG3)",
+        "change_control": "All rule changes via documented change management process",
+        "encryption": "All traffic to/from external zones must use TLS 1.2+"
+      }
+    }
+  },
+
+  "rule_categories": {
+    "CRITICAL": {
+      "level": 1,
+      "description": "Security-critical rules",
+      "examples": ["Payment systems", "Authentication servers", "Security appliances"],
+      "required_fields": ["install_on", "log", "comments", "compliance_standard"],
+      "requires_change_control": true,
+      "requires_quarterly_review": true
+    },
+    "BUSINESS": {
+      "level": 2,
+      "description": "Business-critical applications",
+      "examples": ["POS", "Inventory", "Store operations"],
+      "required_fields": ["install_on", "log"],
+      "requires_quarterly_review": false
+    },
+    "OPERATIONAL": {
+      "level": 3,
+      "description": "Operational but not critical",
+      "examples": ["DNS", "NTP", "Monitoring"],
+      "required_fields": ["install_on"],
+      "requires_quarterly_review": false
+    },
+    "SUPPORT": {
+      "level": 4,
+      "description": "Support services",
+      "examples": ["Jump hosts", "Log aggregation"],
+      "required_fields": [],
+      "requires_quarterly_review": false
+    }
+  },
+
+  "rule_templates": {
+    "allow_internal_to_internal": {
+      "description": "Allow traffic between internal zones",
+      "source": "INTERNAL_CORE",
+      "destination": "INTERNAL_CORE",
+      "encryption_required": false,
+      "logging_required": true,
+      "category": "OPERATIONAL"
+    },
+    "allow_store_to_service": {
+      "description": "Allow store network to specific service",
+      "source": "STORE_NETWORKS",
+      "destination": "EXTERNAL_SAAS",
+      "encryption_required": true,
+      "logging_required": true,
+      "category": "BUSINESS",
+      "compliance_standard": "PCI_DSS"
+    },
+    "restrict_internet_access": {
+      "description": "Restrict internet access through proxy",
+      "source": "STORE_NETWORKS",
+      "destination": "EXTERNAL_INTERNET",
+      "encryption_required": true,
+      "logging_required": true,
+      "proxy_required": true,
+      "category": "CRITICAL",
+      "compliance_standard": "ISO_27001"
+    },
+    "allow_admin_access": {
+      "description": "Allow admin access with logging/audit",
+      "source": "INTERNAL_CORE",
+      "destination": "ANY",
+      "encryption_required": true,
+      "logging_required": true,
+      "audit_logging_required": true,
+      "category": "CRITICAL",
+      "compliance_standard": "PCI_DSS"
+    }
+  }
+}

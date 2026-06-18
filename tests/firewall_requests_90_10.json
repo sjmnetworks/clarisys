@@ -1,0 +1,120 @@
+{
+  "requests": [
+    {
+      "source": "10.10.1.10",
+      "destination": "finance-api.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "finance-src",
+      "destination_interface": "shared-services-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "source": "10.10.1.11",
+      "destination": "hr-api.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "utm",
+      "action": "accept",
+      "source_interface": "hr-src",
+      "destination_interface": "shared-services-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "source": "10.10.1.12",
+      "destination": "inventory-service.internal",
+      "protocol": "tcp",
+      "port": 8443,
+      "log": "all",
+      "action": "accept",
+      "encryption_required": true,
+      "tls_version_minimum": "1.2",
+      "source_interface": "supply-src",
+      "destination_interface": "ops-dst",
+      "data_classification": "Confidential"
+    },
+    {
+      "source": "10.10.1.13",
+      "destination": "pricing-engine.internal",
+      "protocol": "tcp",
+      "port": 9443,
+      "log": "all",
+      "action": "accept",
+      "encryption_required": true,
+      "tls_version_minimum": "1.3",
+      "source_interface": "pricing-src",
+      "destination_interface": "retail-dst",
+      "data_classification": "Highly Confidential"
+    },
+    {
+      "source": "10.10.1.14",
+      "destination": "analytics.internal",
+      "protocol": "udp",
+      "port": 53,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "analytics-src",
+      "destination_interface": "dns-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "source": "10.10.1.15",
+      "destination": "store-kiosk.internal",
+      "protocol": "icmp",
+      "port": 0,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "retail-src",
+      "destination_interface": "network-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "source": "10.10.1.16",
+      "destination": "vendor-feed.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "partner-src",
+      "destination_interface": "integration-dst",
+      "data_classification": "Internal",
+      "approved_external_sharing": true,
+      "contract_reference": "DPA-2026-041"
+    },
+    {
+      "source": "10.10.1.17",
+      "destination": "warehouse-api.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "warehouse-src",
+      "destination_interface": "logistics-dst",
+      "data_classification": "Public"
+    },
+    {
+      "source": "10.10.1.18",
+      "destination": "customer-portal.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "digital-src",
+      "destination_interface": "dmz-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "source": "10.10.1.19",
+      "destination": "payment-gateway.internal",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "no_log",
+      "action": "deny",
+      "source_interface": "retail-src",
+      "destination_interface": "payments-dst",
+      "data_classification": "Confidential"
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "policies": [
+    {
+      "policy": [
+        {
+          "from-zone-name": {
+            "data": "trust"
+          },
+          "to-zone-name": {
+            "data": "untrust"
+          },
+          "policy": [
+            {
+              "name": {
+                "data": "web-servers-outbound"
+              },
+              "match": [
+                {
+                  "source-address": [
+                    {
+                      "data": "10.0.1.0/24"
+                    }
+                  ],
+                  "destination-address": [
+                    {
+                      "data": "0.0.0.0/0"
+                    }
+                  ],
+                  "application": [
+                    {
+                      "data": "http"
+                    },
+                    {
+                      "data": "https"
+                    }
+                  ]
+                }
+              ],
+              "then": [
+                {
+                  "permit": [
+                    {}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": {
+                "data": "ssh-admin"
+              },
+              "match": [
+                {
+                  "source-address": [
+                    {
+                      "data": "10.0.10.0/24"
+                    }
+                  ],
+                  "destination-address": [
+                    {
+                      "data": "10.0.1.0/24"
+                    }
+                  ],
+                  "application": [
+                    {
+                      "data": "ssh"
+                    }
+                  ]
+                }
+              ],
+              "then": [
+                {
+                  "permit": [
+                    {}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": {
+                "data": "default-deny"
+              },
+              "match": [
+                {
+                  "source-address": [
+                    {
+                      "data": "any"
+                    }
+                  ],
+                  "destination-address": [
+                    {
+                      "data": "any"
+                    }
+                  ],
+                  "application": [
+                    {
+                      "data": "any"
+                    }
+                  ]
+                }
+              ],
+              "then": [
+                {
+                  "deny": [
+                    {}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "from-zone-name": {
+            "data": "dmz"
+          },
+          "to-zone-name": {
+            "data": "untrust"
+          },
+          "policy": [
+            {
+              "name": {
+                "data": "database-replication-outbound"
+              },
+              "match": [
+                {
+                  "source-address": [
+                    {
+                      "data": "10.0.2.50"
+                    }
+                  ],
+                  "destination-address": [
+                    {
+                      "data": "203.0.113.100"
+                    }
+                  ],
+                  "application": [
+                    {
+                      "data": "mysql"
+                    }
+                  ]
+                }
+              ],
+              "then": [
+                {
+                  "permit": [
+                    {}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": {
+                "data": "block-telnet"
+              },
+              "match": [
+                {
+                  "source-address": [
+                    {
+                      "data": "any"
+                    }
+                  ],
+                  "destination-address": [
+                    {
+                      "data": "10.0.2.0/25"
+                    }
+                  ],
+                  "application": [
+                    {
+                      "data": "telnet"
+                    }
+                  ]
+                }
+              ],
+              "then": [
+                {
+                  "deny": [
+                    {}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "zones": [
+    {
+      "security-zone": [
+        {
+          "name": {
+            "data": "trust"
+          },
+          "interfaces": [
+            {
+              "name": {
+                "data": "ge-0/0/1.0"
+              }
+            },
+            {
+              "name": {
+                "data": "ge-0/0/2.0"
+              }
+            }
+          ]
+        },
+        {
+          "name": {
+            "data": "untrust"
+          },
+          "interfaces": [
+            {
+              "name": {
+                "data": "ge-0/0/0.0"
+              }
+            }
+          ]
+        },
+        {
+          "name": {
+            "data": "dmz"
+          },
+          "interfaces": [
+            {
+              "name": {
+                "data": "ge-0/0/3.0"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+name: monitoring-drill
+
+"on":
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Optional override for target API base URL
+        required: false
+        type: string
+      generate_traffic:
+        description: Number of synthetic requests to generate during drill
+        required: false
+        default: '20'
+        type: string
+      wait_after_traffic:
+        description: Seconds to wait after traffic for scrape windows
+        required: false
+        default: '15'
+        type: string
+
+jobs:
+  run-monitoring-drill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run monitoring drill
+        id: drill
+        env:
+          DRILL_BASE_URL_SECRET_NAME: FIREWALL_API_BASE_URL
+          DRILL_TOKEN_SECRET_NAME: FIREWALL_API_TOKEN
+          DRILL_TRAFFIC_VAR_NAME: MONITORING_DRILL_GENERATE_TRAFFIC
+          DRILL_WAIT_VAR_NAME: MONITORING_DRILL_WAIT_AFTER_TRAFFIC
+          DISPATCH_BASE_URL: ${{ inputs.base_url }}
+          SECRET_BASE_URL: ${{ secrets[env.DRILL_BASE_URL_SECRET_NAME] }}
+          FIREWALL_API_TOKEN: ${{ secrets[env.DRILL_TOKEN_SECRET_NAME] }}
+          INPUT_GENERATE_TRAFFIC: ${{ inputs.generate_traffic }}
+          INPUT_WAIT_AFTER_TRAFFIC: ${{ inputs.wait_after_traffic }}
+          DEFAULT_GENERATE_TRAFFIC: ${{ vars[env.DRILL_TRAFFIC_VAR_NAME] }}
+          DEFAULT_WAIT_AFTER_TRAFFIC: ${{ vars[env.DRILL_WAIT_VAR_NAME] }}
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${DISPATCH_BASE_URL:-}"
+          if [[ -z "$BASE_URL" ]]; then
+            BASE_URL="${SECRET_BASE_URL:-}"
+          fi
+
+          if [[ -z "$BASE_URL" ]]; then
+            echo "FIREWALL_API_BASE_URL is required (set secret or workflow_dispatch input)." | tee monitoring-drill-output.txt
+            exit 2
+          fi
+
+          GENERATE_TRAFFIC="${INPUT_GENERATE_TRAFFIC:-}"
+          if [[ -z "$GENERATE_TRAFFIC" ]]; then
+            GENERATE_TRAFFIC="${DEFAULT_GENERATE_TRAFFIC:-20}"
+          fi
+
+          WAIT_AFTER_TRAFFIC="${INPUT_WAIT_AFTER_TRAFFIC:-}"
+          if [[ -z "$WAIT_AFTER_TRAFFIC" ]]; then
+            WAIT_AFTER_TRAFFIC="${DEFAULT_WAIT_AFTER_TRAFFIC:-15}"
+          fi
+
+          ARGS=(
+            --base-url "$BASE_URL"
+            --generate-traffic "$GENERATE_TRAFFIC"
+            --wait-after-traffic "$WAIT_AFTER_TRAFFIC"
+          )
+
+          if [[ -n "${FIREWALL_API_TOKEN:-}" ]]; then
+            ARGS+=(--token "$FIREWALL_API_TOKEN")
+          fi
+
+          python3 tools/run_alert_drill.py "${ARGS[@]}" 2>&1 | tee monitoring-drill-output.txt
+
+      - name: Upload drill output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-drill-output-${{ github.run_id }}
+          path: monitoring-drill-output.txt

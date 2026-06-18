@@ -1,0 +1,521 @@
+groups:
+  - name: firewall-recording-rules
+    interval: 5s
+    rules:
+      - record: firewall:request_error_rate_5m
+        expr: |
+          sum(rate(firewall_requests_error[5m]))
+          /
+          clamp_min(sum(rate(firewall_requests_total[5m])), 1)
+
+      - record: firewall:request_error_rate_30m
+        expr: |
+          sum(rate(firewall_requests_error[30m]))
+          /
+          clamp_min(sum(rate(firewall_requests_total[30m])), 1)
+
+      - record: firewall:request_error_rate_1h
+        expr: |
+          sum(rate(firewall_requests_error[1h]))
+          /
+          clamp_min(sum(rate(firewall_requests_total[1h])), 1)
+
+      - record: firewall:request_error_rate_6h
+        expr: |
+          sum(rate(firewall_requests_error[6h]))
+          /
+          clamp_min(sum(rate(firewall_requests_total[6h])), 1)
+
+      # Burn rate versus a 99% availability SLO (1% error budget).
+      # burn_rate = observed_error_rate / 0.01
+      - record: firewall:error_budget_burn_rate_5m
+        expr: firewall:request_error_rate_5m / 0.01
+
+      - record: firewall:error_budget_burn_rate_30m
+        expr: firewall:request_error_rate_30m / 0.01
+
+      - record: firewall:error_budget_burn_rate_1h
+        expr: firewall:request_error_rate_1h / 0.01
+
+      - record: firewall:error_budget_burn_rate_6h
+        expr: firewall:request_error_rate_6h / 0.01
+
+      - record: firewall:request_volume_rps_5m
+        expr: sum(rate(firewall_requests_total[5m]))
+
+      - record: firewall:requests_total_5m
+        expr: sum(increase(firewall_requests_total[5m]))
+
+      - record: firewall:rate_limited_5m
+        expr: sum(increase(firewall_rate_limited_total[5m]))
+
+      - record: firewall:decisions_denied_total
+        expr: firewall_decisions_deny
+
+      - record: firewall:decisions_accepted_total
+        expr: clamp_min(firewall_decisions_total - firewall_decisions_deny, 0)
+
+      - record: firewall:decisions_denied_5m
+        expr: sum(increase(firewall_decisions_deny[5m]))
+
+      - record: firewall:decisions_accepted_5m
+        expr: |
+          clamp_min(
+            sum(increase(firewall_decisions_total[5m]))
+            -
+            sum(increase(firewall_decisions_deny[5m])),
+            0
+          )
+
+      - record: firewall:deny_rate_5m
+        expr: avg_over_time(firewall_deny_rate[5m])
+
+      - record: firewall:latency_p95_ms_5m_max
+        expr: max_over_time(firewall_latency_p95_ms[5m])
+
+      - record: firewall:slack_dispatch_latency_p95_ms_5m_max
+        expr: max_over_time(firewall_slack_dispatch_latency_p95_ms[5m])
+
+      - record: firewall:service_up
+        expr: min(up{job=~"firewall-api-(slo|alerts)"})
+
+      - record: firewall:opa_latency_p95_ms_5m
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le, mode) (
+              rate(firewall_opa_request_latency_seconds_bucket[5m])
+            )
+          ) * 1000
+
+  - name: firewall-alert-rules
+    interval: 5s
+    rules:
+      - alert: FirewallApiErrorRateHigh
+        expr: firewall:request_error_rate_5m > 0.03
+        for: 10m
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API error rate is high
+          description: "5m error rate is {{ $value | humanizePercentage }} (> 3%)."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapierrorratehigh"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallApiErrorBudgetBurnFast
+        # Multi-window burn-rate alert (99% SLO): catches rapid budget burn.
+        # 14.4x burn means the 1% monthly budget is exhausted in ~2 days.
+        expr: |
+          firewall:error_budget_burn_rate_5m > 14.4
+          and
+          firewall:error_budget_burn_rate_1h > 14.4
+        for: 2m
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API fast error-budget burn detected
+          description: "Error budget burn rate > 14.4x in both 5m and 1h windows."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapierrorratehigh"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallApiErrorBudgetBurnSlow
+        # Slow-burn pair catches persistent smaller regressions before budget loss.
+        expr: |
+          firewall:error_budget_burn_rate_30m > 6
+          and
+          firewall:error_budget_burn_rate_6h > 6
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API slow error-budget burn detected
+          description: "Error budget burn rate > 6x in both 30m and 6h windows."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapierrorratehigh"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallApiLatencyP95High
+        expr: firewall:latency_p95_ms_5m_max > 1500
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API p95 latency is high
+          description: "5m max p95 latency is {{ $value }} ms (> 1500 ms)."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapilatencyp95high"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallRateLimitedElevated
+        # Sustained 429s usually mean backpressure or quota mis-sizing.
+        expr: firewall:rate_limited_5m >= 5
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API rate-limited requests elevated
+          description: "HTTP 429 count in the last 5m is {{ $value }} (>= 5)."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallOPAUnavailable
+        expr: increase(firewall_opa_unavailable_total[10m]) >= 2
+        for: 2m
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: OPA unavailable events detected
+          description: "OPA unavailable counter increased by at least 2 in the last 10m."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallopaunavailable"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallOPATimeouts
+        expr: increase(firewall_opa_timeout_total[10m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: OPA timeouts detected
+          description: "firewall_opa_timeout_total increased in the last 10m."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallopaunavailable"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallOPALatencyP95High
+        expr: max(firewall:opa_latency_p95_ms_5m) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: OPA p95 latency is high
+          description: "OPA p95 latency over 5m is {{ $value }} ms (> 1000 ms)."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallopaunavailable"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallAlertEngineCritical
+        expr: max(firewall_alert_status{level="critical"}) == 1
+        for: 2m
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall alert engine reports CRITICAL status
+          description: "At least one critical threshold is currently breached."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallalertenginecritical--firewallalertenginewarning"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallAlertEngineWarning
+        expr: max(firewall_alert_status{level="warn"}) == 1
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall alert engine reports WARN status
+          description: "One or more warning thresholds are currently breached."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallalertenginecritical--firewallalertenginewarning"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallSpecificThresholdBreach
+        expr: firewall_alert_active == 1
+        for: 10m
+        labels:
+          severity: info
+          service: firewall-policy-api
+        annotations:
+          summary: "Firewall threshold breached: {{ $labels.alert_id }}"
+          description: "Alert {{ $labels.alert_id }} is active (severity={{ $labels.severity }})."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallspecificthresholdbreach"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallApiScrapeDown
+        expr: firewall:service_up < 1
+        for: 3m
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: Firewall API scrape target down
+          description: "One or more firewall-api scrape targets are down."
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallROIStateDriftAutocorrect
+        # The autocorrect counter only increments when the persisted ROI
+        # snapshot disagrees with decision-history by >= 50% — i.e. the
+        # state file was clearly stale or corrupt. Any increase in a 1h
+        # window is worth a human look (silent corruption signal).
+        expr: increase(firewall_roi_state_drift_autocorrect_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "ROI state file auto-corrected ({{ $labels.direction }})"
+          description: |
+            The ROI state file disagreed with decision history by at least 50%
+            and was rebuilt from history at API bootstrap (direction={{ $labels.direction }}).
+            Investigate: disk corruption, partial writes, manual edits, or rollback.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallroistatedriftautocorrect"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallROIStateDriftElevated
+        # Drift detected but below the autocorrect threshold (5..50%).
+        # Below 5% is treated as scrape-window noise (no counter increment).
+        # Three or more drift events in a day suggests something systemic
+        # — slow filesystem, scheduled task that truncates the file, etc.
+        expr: increase(firewall_roi_state_drift_total[24h]) >= 3
+        for: 5m
+        labels:
+          severity: info
+          service: firewall-policy-api
+        annotations:
+          summary: "ROI state drift events elevated (>=3 in 24h, {{ $labels.direction }})"
+          description: |
+            Drift detector fired {{ $value }} time(s) in 24h for direction={{ $labels.direction }}.
+            Persistent low-grade drift may indicate a process not flushing state
+            or an external job mutating the snapshot file.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallroistatedriftelevated"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallStateWriteFailures
+        # State writes should be near-perfect. Any sustained failure increase
+        # indicates filesystem permission/path issues or concurrent-writer bugs.
+        expr: increase(firewall_state_write_total{outcome="failure"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "State-file write failures detected (component={{ $labels.component }})"
+          description: |
+            firewall_state_write_total{outcome="failure",component="{{ $labels.component }}"}
+            increased in the last 15m. Investigate disk/path permissions,
+            read-only mounts, or concurrent writers.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallWatchdogStale
+        # The opa-api-watchdog timer fires every 5 minutes and writes a
+        # textfile-collector .prom file with the last-run timestamp.
+        # If we don't see a refresh in 15 minutes (3 timer intervals)
+        # the timer/unit is broken — we lose our blind-spot detector.
+        expr: time() - max by (unit) (firewall_watchdog_last_run_timestamp_seconds) > 900
+        for: 5m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Watchdog timer is stale (unit={{ $labels.unit }})"
+          description: |
+            firewall_watchdog_last_run_timestamp_seconds for {{ $labels.unit }}
+            has not advanced in over 15 minutes. The opa-api-watchdog.timer
+            may be disabled, failing, or the textfile collector path is
+            unwritable. Without it, restart loops will go undetected.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallwatchdogstale"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallWatchdogReportsUnhealthy
+        # Last watchdog run flagged the unit as unhealthy. Slack alerting
+        # is the primary path; this alert is the redundant Prometheus
+        # signal so unhealthy state is visible on the dashboard even if
+        # Slack is degraded.
+        expr: firewall_watchdog_last_run_healthy == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Watchdog reports {{ $labels.unit }} unhealthy"
+          description: |
+            The most recent opa-api-watchdog run found {{ $labels.unit }}
+            unhealthy. Check journalctl, Slack alerts, and the latest
+            forensics bundle in ~/.firewall-api/forensics/.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallwatchdogreportsunhealthy"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallDecisionHistoryBackupStale
+        # decision_history.jsonl is the source of truth for ROI bootstrap
+        # and state-drift autocorrect. We back it up daily; if no backup
+        # has succeeded in 36 hours (1.5x the daily cadence) the timer
+        # has stopped or the backup script is failing.
+        expr: time() - max(firewall_decision_history_backup_last_success_timestamp_seconds) > 129600
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Decision history backup is stale (>36h since last success)"
+          description: |
+            firewall_decision_history_backup_last_success_timestamp_seconds
+            has not advanced in over 36 hours. Loss of the decision history
+            file means ROI metrics flatline with no recovery path. Check
+            opa-api-decision-history-backup.timer and the latest journal
+            output for the corresponding service.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewalldecisionhistorybackupstale"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallDecisionHistoryBackupFailing
+        # Last backup run reported a hard failure (status=2). Surfaces
+        # immediately rather than waiting for the staleness window.
+        expr: firewall_decision_history_backup_last_status == 2
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Decision history backup last run failed"
+          description: |
+            The most recent opa-api-decision-history-backup run exited
+            with status=2 (hard failure). Check journalctl -u
+            opa-api-decision-history-backup.service.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewalldecisionhistorybackupfailing"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallBulkStreamP95High
+        # Per-endpoint SLO for /evaluate/bulk/stream total wall-clock duration.
+        # Uses firewall_stream_duration_seconds which is observed when the NDJSON
+        # generator is exhausted (true end-to-end), NOT firewall_request_latency_seconds
+        # which fires on StreamingResponse creation (~time-to-first-byte, <5ms).
+        # Baseline (in-process bench, see test-payloads/perf_test_stream.py):
+        #     size=  1   p95 ~  36ms
+        #     size= 10   p95 ~ 330ms
+        #     size= 50   p95 ~ 1.6s
+        #     size=100   p95 ~ 3.3s
+        #     size=250   p95 ~ 6.9s
+        #     size=500   p95 ~15.6s   <- single-OPA-call-per-item, server cap
+        # Throughput is essentially constant (~30 items/s on prod path,
+        # which carries audit + decision-history disk writes), so p95
+        # scales linearly with batch size. 20s gives ~25% headroom over
+        # the worst-observed prod batch size and catches either OPA
+        # slowdown or sustained traffic of unusually large batches.
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(firewall_stream_duration_seconds_bucket{endpoint="/evaluate/bulk/stream"}[5m])
+            )
+          ) > 20
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "/evaluate/bulk/stream p95 > 20s for 10 minutes"
+          description: |
+            End-to-end p95 stream duration for the NDJSON streaming endpoint has
+            exceeded 20s for 10 minutes. Baseline ~15.6s for 500-item
+            batches; sustained breach means either OPA throughput has
+            degraded or callers are submitting larger-than-expected batches.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallbulkstreamp95high"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallIntakeBulkStreamP95High
+        # Same SLO for the intake variant. Intake adds field-mapping overhead
+        # (~5ms per item) so the same 20s ceiling applies with similar headroom.
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(firewall_stream_duration_seconds_bucket{endpoint="/intake/evaluate/bulk/stream"}[5m])
+            )
+          ) > 20
+        for: 10m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "/intake/evaluate/bulk/stream p95 > 20s for 10 minutes"
+          description: |
+            End-to-end p95 stream duration for the intake NDJSON streaming endpoint has
+            exceeded 20s for 10 minutes. Same linear throughput baseline as the raw
+            stream endpoint; breaches indicate OPA slowdown or oversized batches.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallbulkstreamp95high"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallPilotKeyStale
+        # Pilot API keys are the only authentication artifact in production
+        # today (auth.env keeps AUTH_ENABLED=false). A leaked key is valid
+        # forever unless rotated. 90d matches the AWS-recommended cadence
+        # for IAM credentials and is short enough that a leak from a
+        # ~quarterly developer turnover is contained within one rotation
+        # window. The exporter only emits this metric for users with a
+        # known created_at or rotated_at — see tools/pilot_key_age.py.
+        expr: max by (username) (firewall_pilot_key_age_days{enabled="true"}) > 90
+        for: 1h
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Pilot API key for {{ $labels.username }} is older than 90d"
+          description: |
+            firewall_pilot_key_age_days{username="{{ $labels.username }}"} = {{ $value | printf "%.1f" }}
+            Rotate with:
+              python3 tools/pilot_key_age.py --rotate {{ $labels.username }}
+            Capture the printed raw key once; nothing else stores it.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallpilotkeystale"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallPilotKeyExporterStale
+        # The exporter timer fires once a day. If we don't see a refresh in
+        # 36 hours (one missed run plus a generous tolerance) the timer is
+        # broken — without this we lose visibility on key age and the
+        # FirewallPilotKeyStale alert silently freezes at the last value.
+        expr: time() - max(firewall_pilot_key_exporter_last_run_timestamp_seconds) > 129600
+        for: 30m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Pilot key age exporter has not run in 36 hours"
+          description: |
+            firewall_pilot_key_exporter_last_run_timestamp_seconds has not
+            advanced in 36 hours. Check
+              systemctl status opa-api-pilot-key-age.timer
+              journalctl -u opa-api-pilot-key-age.service
+            Without the exporter, FirewallPilotKeyStale stops detecting new
+            staleness.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallpilotkeyexporterstale"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallCanaryFailed
+        # One or both synthetic canary probes returned the wrong verdict.
+        # This fires immediately on the first bad value — no `for:` window
+        # because a wrong ACCEPTABLE means real traffic could be mis-allowed.
+        expr: min(firewall_canary_pass) == 0
+        labels:
+          severity: critical
+          service: firewall-policy-api
+        annotations:
+          summary: "Synthetic canary probe failed (wrong verdict)"
+          description: |
+            firewall_canary_pass dropped to 0 for at least one probe.
+            A known-good request returned DENY or a known-deny returned ACCEPTABLE.
+            This indicates a policy regression or OPA data-plane failure.
+            Check:
+              python3 tools/canary_probe.py
+              journalctl -u opa-api-canary.service -n 20
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallalertenginecritical--firewallalertenginewarning"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"
+
+      - alert: FirewallCanaryStale
+        # Canary timer fires every 5 minutes; allow 15 minutes (3 missed runs)
+        # before flagging staleness. Without canary data the policy-regression
+        # signal is blind.
+        expr: time() - firewall_canary_last_run_timestamp_seconds > 900
+        for: 5m
+        labels:
+          severity: warning
+          service: firewall-policy-api
+        annotations:
+          summary: "Canary probe has not run in 15 minutes"
+          description: |
+            firewall_canary_last_run_timestamp_seconds has not advanced in 15m.
+            Check systemctl status opa-api-canary.timer and journalctl -u opa-api-canary.service.
+          runbook_url: "https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts"
+          dashboard_url: "http://127.0.0.1:3000/d/firewall-policy-api-slo-alerts/firewall-policy-api-core-monitoring"

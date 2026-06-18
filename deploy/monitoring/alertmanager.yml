@@ -1,0 +1,44 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default-ops
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 2h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: critical-ops
+      continue: false
+
+inhibit_rules:
+  # If a critical alert is active for a service, suppress lower-severity noise.
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity=~"warning|info"
+    equal: ['service']
+
+  # Explicitly suppress alert-engine warning when critical status is active.
+  - source_matchers:
+      - alertname="FirewallAlertEngineCritical"
+      - service="firewall-policy-api"
+    target_matchers:
+      - alertname="FirewallAlertEngineWarning"
+      - service="firewall-policy-api"
+    equal: ['service']
+
+receivers:
+  - name: default-ops
+    webhook_configs:
+      - url: http://localhost:9000/alert
+        send_resolved: true
+
+  - name: critical-ops
+    webhook_configs:
+      - url: http://localhost:9000/critical-alert
+        send_resolved: true
+
+# Replace webhook receivers with your real paging target (PagerDuty/Opsgenie/Teams/Slack/email).

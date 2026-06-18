@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firewall Ruleset Compliance Report</title>
+    <style>
+        :root {
+            --ms-black: #111111;
+            --ms-charcoal: #1f1f1f;
+            --ms-text: #222222;
+            --ms-muted: #6a6a6a;
+            --ms-line: #d9d9d9;
+            --ms-bg: #f7f5f2;
+            --ms-surface: #ffffff;
+            --ms-good: #1f6f3f;
+            --ms-bad: #b02a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.55;
+            color: var(--ms-text);
+            background: var(--ms-bg);
+            min-height: 100vh;
+            padding: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--ms-surface);
+            border: 1px solid var(--ms-line);
+            box-shadow: 0 10px 28px rgba(17, 17, 17, 0.08);
+            overflow: hidden;
+        }
+
+        .utility-strip {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            background: var(--ms-black);
+            color: #f4f4f4;
+            padding: 9px 28px;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .utility-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .utility-links span {
+            opacity: 0.9;
+        }
+
+        .brand-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 28px;
+            border-bottom: 1px solid var(--ms-line);
+            background: #fff;
+        }
+
+        .brand {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.16em;
+            color: var(--ms-black);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .top-nav {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ms-charcoal);
+        }
+
+        .top-nav a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .top-nav a:hover {
+            border-bottom-color: var(--ms-black);
+        }
+
+        header {
+            background: #fff;
+            color: var(--ms-charcoal);
+            padding: 20px 28px 22px;
+            border-bottom: 1px solid var(--ms-line);
+        }
+
+        header h1 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 2.05rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            color: var(--ms-muted);
+            font-size: 0.92rem;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            padding: 16px 28px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--ms-line);
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #fff;
+            border: 1px solid var(--ms-line);
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: var(--ms-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .meta-value {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--ms-charcoal);
+        }
+
+        .status-non-compliant,
+        .status-denied {
+            color: var(--ms-bad);
+        }
+
+        .status-compliant,
+        .status-acceptable {
+            color: var(--ms-good);
+        }
+
+        .content {
+            padding: 26px 28px 32px;
+        }
+
+        h2 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.5rem;
+            color: var(--ms-charcoal);
+            margin-top: 30px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--ms-black);
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 1rem;
+            color: var(--ms-charcoal);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: #f5f5f5;
+            border-left: 3px solid var(--ms-black);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            border: 1px solid var(--ms-line);
+        }
+
+        thead {
+            background: var(--ms-black);
+            color: #fff;
+        }
+
+        th {
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ececec;
+            vertical-align: top;
+            font-size: 0.94rem;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fcfcfc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .stat-box {
+            padding: 14px;
+            background: #fff;
+            text-align: center;
+            border: 1px solid var(--ms-line);
+            border-top: 3px solid #222;
+        }
+
+        .stat-box.acceptable {
+            border-top-color: var(--ms-good);
+        }
+
+        .stat-box.denied {
+            border-top-color: var(--ms-bad);
+        }
+
+        .stat-number {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--ms-charcoal);
+            margin: 4px 0;
+        }
+
+        .stat-box.acceptable .stat-number {
+            color: var(--ms-good);
+        }
+
+        .stat-box.denied .stat-number {
+            color: var(--ms-bad);
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--ms-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+        }
+
+        .rule-card {
+            background: #fff;
+            border: 1px solid var(--ms-line);
+            border-left: 4px solid #c2c2c2;
+            padding: 14px;
+            margin: 10px 0;
+        }
+
+        .rule-card.acceptable {
+            border-left-color: var(--ms-good);
+            background: #fbfdfb;
+        }
+
+        .rule-card.denied {
+            border-left-color: var(--ms-bad);
+            background: #fffafa;
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--ms-line);
+            flex-wrap: wrap;
+        }
+
+        .rule-number {
+            font-size: 0.94rem;
+            font-weight: 700;
+            color: var(--ms-charcoal);
+        }
+
+        .rule-verdict {
+            padding: 3px 9px;
+            border: 1px solid;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+        }
+
+        .verdict-deny {
+            color: var(--ms-bad);
+            border-color: var(--ms-bad);
+            background: #fff5f5;
+        }
+
+        .verdict-acceptable {
+            color: var(--ms-good);
+            border-color: var(--ms-good);
+            background: #f4fbf6;
+        }
+
+        .severity-high {
+            color: #fff;
+            background: var(--ms-bad);
+            padding: 3px 7px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+        }
+
+        .severity-low {
+            color: #fff;
+            background: #3f3f3f;
+            padding: 3px 7px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+        }
+
+        .rule-section {
+            margin: 8px 0;
+        }
+
+        .rule-label {
+            font-weight: 700;
+            color: var(--ms-muted);
+            display: inline-block;
+            min-width: 126px;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+        }
+
+        .rule-value {
+            color: var(--ms-text);
+            word-break: break-word;
+        }
+
+        .violations {
+            margin-top: 12px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid var(--ms-line);
+        }
+
+        .violation {
+            margin: 8px 0;
+            padding: 8px;
+            background: #fafafa;
+            border-left: 2px solid var(--ms-bad);
+        }
+
+        .violation-title {
+            font-weight: 600;
+            color: var(--ms-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .remediation {
+            margin-top: 6px;
+            padding: 6px;
+            background: #fff;
+            border-left: 2px solid var(--ms-good);
+            color: #1c5d37;
+            font-size: 0.92rem;
+        }
+
+        .summary {
+            background: #fafafa;
+            padding: 16px;
+            margin: 16px 0;
+            border: 1px solid var(--ms-line);
+            border-left: 4px solid var(--ms-black);
+        }
+
+        .summary p {
+            margin: 7px 0;
+            color: #2f2f2f;
+        }
+
+        footer {
+            background: #f5f5f5;
+            padding: 14px 28px;
+            text-align: center;
+            color: #4f4f4f;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--ms-line);
+        }
+
+        @media (max-width: 768px) {
+            .utility-strip,
+            .brand-row,
+            header,
+            .metadata,
+            .content,
+            footer {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .utility-strip,
+            .brand-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .brand {
+                font-size: 1.05rem;
+            }
+
+            header h1 {
+                font-size: 1.55rem;
+            }
+
+            .metadata {
+                grid-template-columns: 1fr;
+            }
+
+            .rule-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="utility-strip">
+            <div>Marks and Spencer</div>
+            <div class="utility-links">
+                <span>Help</span>
+                <span>Delivery & Returns</span>
+                <span>Contact</span>
+            </div>
+        </div>
+
+        <div class="brand-row">
+            <div class="brand">M&S</div>
+            <nav class="top-nav" aria-label="Report Navigation">
+                <a href="#summary">Summary</a>
+                <a href="#controls">Controls</a>
+                <a href="#standards">Standards</a>
+                <a href="#findings">Findings</a>
+            </nav>
+        </div>
+
+        <header>
+            <h1>Firewall Ruleset Compliance Report</h1>
+            <p>Compliance view aligned to M&S visual branding conventions.</p>
+        </header>
+
+        <div class="metadata">
+            <div class="meta-item">
+                <span class="meta-label">Generated</span>
+                <span class="meta-value">2026-06-15T14:02:52Z</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Schema</span>
+                <span class="meta-value">Raw Format</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Total Rules</span>
+                <span class="meta-value">34</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Overall Status</span>
+                <span class="meta-value status-non-compliant">NON-COMPLIANT</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2 id="summary">Summary</h2>
+            <div class="stats-grid">
+                <div class="stat-box acceptable">
+                    <div class="stat-label">Acceptable Rules</div>
+                    <div class="stat-number">5</div>
+                </div>
+                <div class="stat-box denied">
+                    <div class="stat-label">Denied Rules</div>
+                    <div class="stat-number">29</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Invalid Rows</div>
+                    <div class="stat-number">0</div>
+                </div>
+            </div>
+
+            <h2 id="controls">Failed Controls</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Control</th>
+                        <th>Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>CIS_4.8</strong> - Overly permissive rules</td>
+                        <td><strong style="color: #b02a2a;">29</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>IAM-8 / Cloud-09 / CIS_8.2</strong> - Missing logging</td>
+                        <td><strong style="color: #b02a2a;">2</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 id="standards">Failed Standards</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Standard</th>
+                        <th>Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CIS v8.1</td>
+                        <td><strong style="color: #b02a2a;">29</strong></td>
+                    </tr>
+                    <tr>
+                        <td>ISO 27001</td>
+                        <td><strong style="color: #b02a2a;">29</strong></td>
+                    </tr>
+                    <tr>
+                        <td>M&S NFR</td>
+                        <td><strong style="color: #b02a2a;">29</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 id="findings">Per-Rule Findings</h2>
+
+            <div class="rule-card acceptable">
+                <div class="rule-header">
+                    <div class="rule-number">Row 7</div>
+                    <div class="rule-verdict verdict-acceptable">ACCEPTABLE</div>
+                    <div class="severity-low">LOW</div>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Target:</span>
+                    <span class="rule-value">IP/Netmask: $(store_main_vlan1432_net) -> IP/Netmask: $(store_main_vlan101_dns_server) tcp/53</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Reason:</span>
+                    <span class="rule-value">Permitted: the proposed request is compliant with M&S NFR controls.</span>
+                </div>
+            </div>
+
+            <div class="rule-card acceptable">
+                <div class="rule-header">
+                    <div class="rule-number">Row 32</div>
+                    <div class="rule-verdict verdict-acceptable">ACCEPTABLE</div>
+                    <div class="severity-low">LOW</div>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Target:</span>
+                    <span class="rule-value">IP/Netmask: $(store_main_vlan104_net) -> Group Member (8) tcp/443</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Reason:</span>
+                    <span class="rule-value">Permitted: the proposed request is compliant with M&S NFR controls.</span>
+                </div>
+            </div>
+
+            <h3>Denied Rules (Sample - 29 total)</h3>
+
+            <div class="rule-card denied">
+                <div class="rule-header">
+                    <div class="rule-number">Row 2</div>
+                    <div class="rule-verdict verdict-deny">DENY</div>
+                    <div class="severity-high">HIGH</div>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Target:</span>
+                    <span class="rule-value">IP/Netmask: $(store_main_data_summary) -> IP/Netmask: $(store_main_data_summary) any/0</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Reason:</span>
+                    <span class="rule-value">Denied due to CIS v8.1, ISO 27001, M&S NFR failures: CIS_4.8, IAM-8 / Cloud-09 / CIS_8.2.</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Failed Controls:</span>
+                    <span class="rule-value">CIS_4.8, IAM-8 / Cloud-09 / CIS_8.2</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Failed Standards:</span>
+                    <span class="rule-value">CIS v8.1, ISO 27001, M&S NFR</span>
+                </div>
+                <div class="violations">
+                    <div class="violation">
+                        <div class="violation-title">CIS_4.8 (HIGH) - Request is overly permissive</div>
+                        <div class="remediation">Specify the minimum required protocol and destination port.</div>
+                    </div>
+                    <div class="violation">
+                        <div class="violation-title">CIS_4.8 (HIGH) - Protocol ANY is overly permissive</div>
+                        <div class="remediation">Use the specific protocol required by the service.</div>
+                    </div>
+                    <div class="violation">
+                        <div class="violation-title">IAM-8 / Cloud-09 / CIS_8.2 (HIGH) - Allow request does not enable logging</div>
+                        <div class="remediation">Set log to all, utm, or an equivalent audited mode.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rule-card denied">
+                <div class="rule-header">
+                    <div class="rule-number">Row 3</div>
+                    <div class="rule-verdict verdict-deny">DENY</div>
+                    <div class="severity-high">HIGH</div>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Target:</span>
+                    <span class="rule-value">IP/Netmask: $(store_main_vlan102_net) -> IP/Netmask: $(store_main_vlan1432_net) tcp/0</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Reason:</span>
+                    <span class="rule-value">Denied due to CIS v8.1, ISO 27001, M&S NFR failures: CIS_4.8.</span>
+                </div>
+                <div class="rule-section">
+                    <span class="rule-label">Failed Controls:</span>
+                    <span class="rule-value">CIS_4.8</span>
+                </div>
+                <div class="violations">
+                    <div class="violation">
+                        <div class="violation-title">CIS_4.8 (HIGH) - Request is overly permissive</div>
+                        <div class="remediation">Specify the minimum required protocol and destination port.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary">
+                <h3 style="margin-top: 0; border: none; padding: 0; background: none;">Key Remediation Recommendations</h3>
+                <p><strong>CIS_4.8 (29 rules):</strong> Specify the minimum required protocol and destination port instead of using wildcard/any/0 values.</p>
+                <p><strong>IAM-8 / Cloud-09 / CIS_8.2 (2 rules):</strong> Enable logging for accept rules by setting log field to log_all_sessions, all, or utm.</p>
+                <p><strong>Network Segmentation:</strong> All rules include proper source_interface and destination_interface metadata for network segmentation tracking.</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Generated from Firewall Policy.xlsx on 2026-06-15 | Policy Module Compliance Audit v1.0</p>
+        </footer>
+    </div>
+</body>
+</html>

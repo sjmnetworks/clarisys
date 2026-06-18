@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate weekly Firewall API reliability report
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/OPA-policymodule
+Environment=PATH=/home/ubuntu/OPA-policymodule/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/ubuntu/OPA-policymodule/.venv/bin/python3 /home/ubuntu/OPA-policymodule/tools/weekly_reliability_report.py

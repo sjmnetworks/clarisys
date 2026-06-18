@@ -1,0 +1,8 @@
+{
+  "source": {"ip": "10.111.1.1", "fqdn": ""},
+  "destination": {"ip": "10.0.0.1", "fqdn": ""},
+  "protocol": "tcp",
+  "port": 22,
+  "interface_in": "VLAN111",
+  "interface_out": "SDWAN.CORP-WAN"
+}

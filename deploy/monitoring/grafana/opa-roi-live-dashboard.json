@@ -1,0 +1,659 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Service Restarts",
+        "datasource": "Prometheus",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "expr": "changes(process_start_time_seconds{job=~\"firewall-api-slo|firewall-api-alerts|firewall-api-roi|prometheus|node-exporter\"}[1m]) > 0",
+        "titleFormat": "Restart",
+        "textFormat": "Restart detected for {{job}}",
+        "type": "tags"
+      }
+    ]
+  },
+  "description": "Live OPA ROI metrics from Prometheus. Top row honours the time picker (windowed gauge delta). Bottom row shows lifetime totals.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Live ROI Tracking",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# Live ROI Tracking from /evaluate, /evaluate/bulk, /evaluate/bulk/stream, /intake/evaluate\n\n**Top row** = ROI accrued in the **selected time range** (responds to the time picker).  \n**Bottom row** = **lifetime cumulative** totals since first ever rule processed.  \n\nDeduplication by `request_id:item_index` prevents double-counting. Bootstrap from `decision_history.jsonl` survives restarts. Refresh: 5s."
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Selected Range  ($__range)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Rules Processed (in range)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 4
+      },
+      "options": {
+        "graphMode": "area",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_rules_processed_current - min_over_time(firewall_rules_processed_current[$__range])",
+          "legendFormat": "Rules"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "HIPS Freed (in range)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "options": {
+        "graphMode": "area",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "(firewall_rules_processed_current - min_over_time(firewall_rules_processed_current[$__range])) * 21",
+          "legendFormat": "HIPS"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Hours Saved (in range)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 4
+      },
+      "options": {
+        "graphMode": "area",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "h",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "(firewall_rules_processed_current - min_over_time(firewall_rules_processed_current[$__range])) * 42",
+          "legendFormat": "Hours"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Cost Saved (in range)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 4
+      },
+      "options": {
+        "graphMode": "area",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gold",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyGBP",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "(firewall_rules_processed_current - min_over_time(firewall_rules_processed_current[$__range])) * 1009.68",
+          "legendFormat": "Cost"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Lifetime Totals",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "collapsed": false
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Rules Processed (lifetime)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 11
+      },
+      "options": {
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_rules_processed_current",
+          "legendFormat": "Total"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "HIPS Freed (lifetime)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 11
+      },
+      "options": {
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_hips_freed_total"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "FTE Redeployed (lifetime)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 11
+      },
+      "options": {
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_fte_redeployed_total"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Cost Saved (lifetime)",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 11
+      },
+      "options": {
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gold",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyGBP",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_cost_saved_gbp_total"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Cost Savings Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "£",
+            "axisPlacements": [
+              "auto"
+            ],
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyGBP"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_cost_saved_gbp_total",
+          "legendFormat": "Cost Saved (lifetime)"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Rules Processed Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Rules",
+            "axisPlacements": [
+              "auto"
+            ],
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "firewall_rules_processed_current",
+          "legendFormat": "Rules Processed (lifetime)"
+        }
+      ],
+      "pluginVersion": "10.0.0"
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "title": "How the math works",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Source of truth\n\nAll four panels in **both rows** are derived from a single Prometheus metric: `firewall_rules_processed_current`. This is a **monotonic** Gauge bootstrapped from `decision_history.jsonl` on each API start, so it is restart-safe. Deriving every pound/hour/HIPS figure from one source guarantees the four panels can never disagree.\n\n## Constants (per rule)\n\n| Multiplier | Value | Source |\n|---|---|---|\n| HIPS freed | x 21 | `HIPS_FREED_PER_RULE` in `api/roi_metrics.py` |\n| Hours saved | x 42 | `HOURS_PER_RULE` |\n| Cost saved | x GBP 1,009.68 | `COST_PER_RULE` (= 42h x GBP 24.04/h) |\n| FTE redeployed | / 2080 | std working hours/year |\n\n## Why two rows\n\n- **Selected Range** uses `current - min_over_time(current[$__range])` — so picking *Last 24h* gives you exactly the last 24h of accrual. Picking *Last 7 days* gives you 7 days. The `min_over_time` form is cold-start-safe: while the metric is younger than the window, you simply see the delta over its lifetime so far.\n- **Lifetime Totals** ignore the picker — they are the all-time cumulative since the metric was first scraped. Useful for board decks; not useful for ops triage.\n\n## Update lag\n\nPrometheus scrape interval is 15s, so the dashboard reflects a rule processed within ~15-30 seconds."
+      }
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "opa",
+    "roi",
+    "live",
+    "prometheus"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "OPA Rules - Live ROI Tracking",
+  "uid": "opa-roi-live-metrics",
+  "version": 2,
+  "weekStart": ""
+}

@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "username": "example-user",
+      "email": "example@company.com",
+      "key_hash": "REPLACE_WITH_SHA256_HASH_OF_RAW_KEY",
+      "scopes": [
+        "firewall.evaluate",
+        "firewall.read"
+      ],
+      "created_at": "1970-01-01T00:00:00+00:00",
+      "enabled": false
+    }
+  ]
+}

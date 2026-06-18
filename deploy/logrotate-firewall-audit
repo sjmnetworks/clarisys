@@ -1,0 +1,16 @@
+# /etc/logrotate.d/firewall-audit
+# Daily rotation of firewall audit logs with 90-day retention
+/var/log/firewall-audit/*.jsonl {
+    daily
+    rotate 90
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600 app app
+    sharedscripts
+    postrotate
+        # Optional: reload or signal app if needed
+        # systemctl reload opa-api-8001 > /dev/null 2>&1 || true
+    endscript
+}

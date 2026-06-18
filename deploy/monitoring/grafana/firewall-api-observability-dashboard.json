@@ -1,0 +1,1609 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Service Restarts",
+        "datasource": "Prometheus",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "expr": "changes(process_start_time_seconds{job=~\"firewall-api-slo|firewall-api-alerts|firewall-api-roi|prometheus|node-exporter\"}[1m]) > 0",
+        "titleFormat": "Restart",
+        "textFormat": "Restart detected for {{job}}",
+        "type": "tags"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 18,
+      "type": "text",
+      "title": "Ops Legend",
+      "description": "Global threshold semantics and panel interpretation for on-call.",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Ops Legend\n- **Green**: healthy or within target\n- **Amber**: warning, investigate trend\n- **Red**: breach or incident response required\n\n**Interpretation notes**\n- Cumulative totals are informational and use neutral coloring.\n- Ratio and health panels use threshold-based colors.\n- `Metrics Stale = 1` means scrape/data flow issue to triage first."
+      }
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 3
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "firewall:service_up",
+          "legendFormat": "Service up",
+          "refId": "A"
+        }
+      ],
+      "description": "Binary service health from recording rule. 1 means UP, 0 means DOWN.",
+      "title": "Service Status (1=UP, 0=DOWN)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 3
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(firewall_decisions_total)",
+          "legendFormat": "Total decisions",
+          "refId": "A"
+        }
+      ],
+      "description": "Cumulative decision count since service start (accepted plus denied).",
+      "title": "Total Requests (Accepted + Denied)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 3
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(clamp_min(firewall_decisions_total - firewall_decisions_deny, 0))",
+          "legendFormat": "Accepted total",
+          "refId": "A"
+        }
+      ],
+      "description": "Cumulative accepted decision count since service start.",
+      "title": "Accepted Rules (Total)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 3
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(firewall_decisions_deny)",
+          "legendFormat": "Denied total",
+          "refId": "A"
+        }
+      ],
+      "description": "Cumulative denied decision count since service start.",
+      "title": "Denied Rules (Total)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "firewall:request_volume_rps_5m",
+          "legendFormat": "Requests/s (5m)",
+          "refId": "A"
+        },
+        {
+          "expr": "firewall:requests_total_5m",
+          "legendFormat": "Requests total (5m)",
+          "refId": "B"
+        }
+      ],
+      "description": "Request throughput from recording rules over a 5 minute window.",
+      "title": "OPA Requests via API",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(clamp_min(firewall_decisions_total - firewall_decisions_deny, 0))",
+          "legendFormat": "Accepted total",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(firewall_decisions_deny)",
+          "legendFormat": "Denied total",
+          "refId": "B"
+        }
+      ],
+      "description": "Accepted and denied cumulative decision totals for policy posture drift.",
+      "title": "Accepted vs Denied (Total)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "firewall_slack_dispatch_latency_avg_ms",
+          "legendFormat": "Slack avg ms",
+          "refId": "A"
+        },
+        {
+          "expr": "firewall_slack_dispatch_latency_p95_ms",
+          "legendFormat": "Slack p95 ms",
+          "refId": "B"
+        },
+        {
+          "expr": "firewall_slack_dispatch_latency_max_ms",
+          "legendFormat": "Slack max ms",
+          "refId": "C"
+        }
+      ],
+      "description": "Slack notification dispatch latency distribution (avg, p95, max).",
+      "title": "Slack Response Times",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "firewall:service_up",
+          "legendFormat": "Service up",
+          "refId": "A"
+        },
+        {
+          "expr": "firewall_alert_status{level=\"critical\"}",
+          "legendFormat": "Critical alert state",
+          "refId": "B"
+        }
+      ],
+      "description": "Overlay of service health and critical alert status for incident confirmation. Runbook: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#quick-triage-all-alerts",
+      "title": "Service and Alert State",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 1500
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 27
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "firewall_latency_avg_ms",
+          "legendFormat": "API mean latency",
+          "refId": "A"
+        }
+      ],
+      "description": "Mean end-to-end API decision latency in milliseconds.",
+      "title": "API Mean Latency (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 27
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(firewall_failed_standard_ms_nfr_total)",
+          "legendFormat": "M&S NFR failures",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(firewall_failed_standard_cis_v81_total)",
+          "legendFormat": "CIS v8.1 failures",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(firewall_failed_standard_iso_27001_total)",
+          "legendFormat": "ISO 27001 failures",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(firewall_failed_standard_pci_dss_total)",
+          "legendFormat": "PCI-DSS failures",
+          "refId": "D"
+        }
+      ],
+      "description": "Cumulative denied decisions grouped by failed compliance standard.",
+      "title": "Failed Standards (Total)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 25
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 35
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "100 * clamp_max(clamp_min(firewall_deny_rate, 0), 1)",
+          "legendFormat": "Denied %",
+          "refId": "A"
+        }
+      ],
+      "description": "Current deny ratio. Green <10%, amber 10-25%, red >25%. Runbook: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallspecificthresholdbreach",
+      "title": "Denied Ratio (%)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 35
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "100 * clamp_max(clamp_min(firewall_error_rate, 0), 1)",
+          "legendFormat": "Error %",
+          "refId": "A"
+        }
+      ],
+      "description": "Current API error ratio. Green <1%, amber 1-5%, red >5%. Runbook: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallapierrorratehigh",
+      "title": "API Error Rate (%)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 35
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(firewall_opa_unavailable_total)",
+          "legendFormat": "OPA unavailable events",
+          "refId": "A"
+        }
+      ],
+      "description": "Cumulative upstream OPA availability failures. Runbook: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#firewallopaunavailable",
+      "title": "OPA Unavailable Events (Total)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(firewall_requests_total[5m])",
+          "legendFormat": "API requests/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(firewall_decisions_total[5m])",
+          "legendFormat": "Decisions/s",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(firewall_decisions_deny[5m])",
+          "legendFormat": "Denied/s",
+          "refId": "C"
+        }
+      ],
+      "description": "Per-second request and decision throughput over 5 minutes.",
+      "title": "Throughput (Requests and Decisions per Second)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(firewall_failed_standard_ms_nfr_total[5m])",
+          "legendFormat": "M&S NFR (5m)",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(firewall_failed_standard_cis_v81_total[5m])",
+          "legendFormat": "CIS v8.1 (5m)",
+          "refId": "B"
+        },
+        {
+          "expr": "increase(firewall_failed_standard_iso_27001_total[5m])",
+          "legendFormat": "ISO 27001 (5m)",
+          "refId": "C"
+        },
+        {
+          "expr": "increase(firewall_failed_standard_pci_dss_total[5m])",
+          "legendFormat": "PCI-DSS (5m)",
+          "refId": "D"
+        }
+      ],
+      "description": "Short-window compliance drift by standard using 5 minute counter increases.",
+      "title": "Failed Standards Rate (5m Increase)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 16,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "firewall_alert_active > 0",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{alert_id}} ({{severity}})",
+          "refId": "A"
+        }
+      ],
+      "description": "Instant view of active alerts exported by the API alert endpoint. Runbook: https://github.com/sjmnetworks/OPA-policymodule/blob/main/deploy/monitoring/RUNBOOK.md#alert-mapping",
+      "title": "Active Alerts (Now)",
+      "type": "table"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(absent_over_time(firewall_requests_total[2m])) OR on() vector(0)",
+          "legendFormat": "Stale metrics",
+          "refId": "A"
+        }
+      ],
+      "description": "No-data detector. 1 indicates no firewall request samples seen for over 2 minutes.",
+      "title": "Metrics Stale (1=Yes, 0=No)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "id": 19,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": true,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=\"systemd-journal\",unit=\"opa-api-8001.service\"} |= \"error\" | json | request_id !~ \"^test-\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "description": "Recent error log lines from the monitored API service in Loki.",
+      "title": "API Error Logs (Loki)",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (unit) (count_over_time({job=\"systemd-journal\",unit=~\"opa-api-8001.service|opa-api.service|nginx.service|prometheus.service|alertmanager.service\"} |~ \"(?i)(error|failed|exception|timeout|refused)\" [5m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "description": "Actionable error volume by core API/ingress/monitoring units (excludes Loki and Grafana internal logs).",
+      "title": "Top Error Volume by Unit (Loki)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineInterpolation": "stepAfter"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*autocorrect.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 67
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (direction) (firewall_roi_state_drift_total)",
+          "legendFormat": "drift / {{direction}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (direction) (firewall_roi_state_drift_autocorrect_total)",
+          "legendFormat": "auto-correct / {{direction}}",
+          "refId": "B"
+        }
+      ],
+      "description": "ROI state-file drift detected at API bootstrap, broken down by direction (snapshot_high vs snapshot_low). Auto-correct fires when |delta| / max(history,1) >= 0.5 and rebuilds state from decision history. A non-zero auto-correct rate means the persisted state file is being trusted less than expected — investigate disk corruption, race conditions, or rollback events.",
+      "title": "ROI State Drift & Auto-Correct (Cumulative)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 67
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(firewall_state_write_total{outcome=\"failure\"}[15m]))",
+          "legendFormat": "Failures",
+          "refId": "A"
+        }
+      ],
+      "description": "State-file write failures across SLO/Slack in the last 15 minutes. Non-zero indicates path/permission/concurrency issues.",
+      "title": "State Write Failures (15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 6
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 67
+      },
+      "id": 23,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "clamp_min(max(firewall:error_budget_burn_rate_5m), max(firewall:error_budget_burn_rate_1h))",
+          "legendFormat": "Fast burn x",
+          "refId": "A"
+        }
+      ],
+      "description": "Fast-burn SLO budget pressure (higher of 5m and 1h burn rates). Critical threshold: 14.4x.",
+      "title": "Error Budget Burn Fast (x)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 67
+      },
+      "id": 24,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "clamp_min(max(firewall:error_budget_burn_rate_30m), max(firewall:error_budget_burn_rate_6h))",
+          "legendFormat": "Slow burn x",
+          "refId": "A"
+        }
+      ],
+      "description": "Slow-burn SLO budget pressure (higher of 30m and 6h burn rates). Warning threshold: 6x.",
+      "title": "Error Budget Burn Slow (x)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 67
+      },
+      "id": 25,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(firewall_opa_timeout_total[10m]))",
+          "legendFormat": "Timeouts",
+          "refId": "A"
+        }
+      ],
+      "description": "OPA timeout count over the last 10 minutes. Non-zero indicates immediate policy-evaluation risk.",
+      "title": "OPA Timeouts (10m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 75
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "firewall:opa_latency_p95_ms_5m",
+          "legendFormat": "{{mode}}",
+          "refId": "A"
+        }
+      ],
+      "description": "OPA request p95 latency over 5m by mode (single vs batch).",
+      "title": "OPA Latency p95 (5m, ms)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 83
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (outcome) (increase(firewall_opa_requests_total[10m]))",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (mode) (increase(firewall_opa_requests_total[10m]))",
+          "legendFormat": "mode {{mode}}",
+          "refId": "B"
+        }
+      ],
+      "description": "OPA request outcomes over the last 10 minutes (success, error, timeout, circuit_open) plus a per-mode split (single vs batch).",
+      "title": "OPA Request Outcomes (10m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 83
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "(sum(increase(firewall_opa_requests_total{outcome=~\"error|timeout|circuit_open\"}[10m])) or on() vector(0)) / clamp_min((sum(increase(firewall_opa_requests_total[10m])) or on() vector(0)), 1)",
+          "legendFormat": "error ratio",
+          "refId": "A"
+        }
+      ],
+      "description": "OPA non-success ratio over 10 minutes: (error + timeout + circuit_open) / total requests.",
+      "title": "OPA Error Ratio (10m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 91
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(firewall_request_latency_seconds_count[5m]))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "description": "Per-endpoint request rate over 5 minutes. Useful for separating traffic spikes from service or OPA degradation.",
+      "title": "Request Rate by Endpoint (5m RPS)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 91
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "firewall:rate_limited_5m",
+          "legendFormat": "429s over 5m",
+          "refId": "A"
+        }
+      ],
+      "description": "Total HTTP 429 responses in the last 5 minutes. Sustained growth indicates quota pressure or backpressure.",
+      "title": "Rate-Limited Requests (5m)",
+      "type": "stat"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "firewall",
+    "policy",
+    "slo",
+    "alerts"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Firewall Policy API - Core Monitoring",
+  "uid": "firewall-policy-api-slo-alerts",
+  "version": 10,
+  "weekStart": ""
+}

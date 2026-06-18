@@ -1,0 +1,99 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+          cache-dependency-path: api/requirements.txt
+
+      - name: Install OPA
+        run: |
+          sudo curl -L -o /usr/local/bin/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          sudo chmod +x /usr/local/bin/opa
+          opa version
+
+      - name: Install promtool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y prometheus
+          promtool --version
+
+      - name: Install Python dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r api/requirements.txt
+          .venv/bin/pip install pip-audit
+
+      - name: Audit Python dependencies for known CVEs
+        # Audits the resolved venv (covers transitive deps, not just the
+        # top-level requirements file). pip itself is the build tool, not
+        # shipped at runtime, so its CVEs are excluded from this gate.
+        # The list below tracks the CVEs reported on the GitHub-hosted
+        # runner's bundled pip; review/prune when the runner image moves
+        # to a newer pip.
+        run: |
+          .venv/bin/pip-audit \
+            --ignore-vuln PYSEC-2026-196 \
+            --ignore-vuln CVE-2025-8869 \
+            --ignore-vuln CVE-2026-1703 \
+            --ignore-vuln CVE-2026-3219 \
+            --ignore-vuln CVE-2026-6357
+
+      - name: Run OPA tests
+        run: |
+          opa fmt --fail policy/*.rego
+          opa check --strict policy/*.rego
+          opa test policy/request_standards.rego policy/request_standards_test.rego
+
+      - name: Validate Grafana dashboards
+        run: |
+          .venv/bin/python tools/validate_grafana_dashboards.py
+
+      - name: Validate Prometheus rules
+        run: |
+          promtool check rules deploy/monitoring/firewall-rules.yml
+
+      - name: Run Prometheus rule unit tests
+        run: |
+          promtool test rules deploy/monitoring/firewall-rules.test.yml
+
+      - name: API startup smoke check
+        run: |
+          .venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8001 >/tmp/ci-api.log 2>&1 &
+          api_pid=$!
+          cleanup() {
+            kill "$api_pid" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8001/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8001/health >/dev/null
+          curl -fsS http://127.0.0.1:8001/metrics/slo >/dev/null
+          curl -fsS http://127.0.0.1:8001/metrics >/dev/null
+
+      - name: Run API tests
+        run: |
+          .venv/bin/pytest tests/test_auth_and_audit.py -q
+          .venv/bin/pytest tests/test_api.py -q

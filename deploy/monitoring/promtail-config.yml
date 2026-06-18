@@ -1,0 +1,46 @@
+server:
+  http_listen_address: 127.0.0.1
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://127.0.0.1:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: systemd-journal
+    journal:
+      path: /var/log/journal
+      max_age: 12h
+      labels:
+        job: systemd-journal
+        app: firewall-observability
+    relabel_configs:
+      - source_labels: [__journal__systemd_unit]
+        regex: (opa-api-8001.service|opa-api.service|prometheus.service|grafana-server.service|nginx.service|loki.service|promtail.service)
+        action: keep
+      - source_labels: [__journal__systemd_unit]
+        target_label: unit
+      - source_labels: [__journal__hostname]
+        target_label: hostname
+      - source_labels: [__journal_priority]
+        target_label: priority
+      - source_labels: [__journal__transport]
+        target_label: transport
+    pipeline_stages:
+      - json:
+          expressions:
+            event: event
+            request_id: request_id
+            path: path
+            verdict: verdict
+            risk_level: risk_level
+            status_code: status_code
+      - labels:
+          event:
+          request_id:
+          path:
+          verdict:
+          risk_level:

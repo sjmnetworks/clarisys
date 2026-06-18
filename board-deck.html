@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>M&amp;S Firewall Policy Compliance Service — Board Deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* M&S master brand palette (marksandspencer.com): monochrome black & white,
+     light-grey surfaces, RAG kept for semantic status only. Variable names
+     retained from earlier draft to minimise downstream churn. */
+  :root {
+    --ms-green: #000000;          /* primary accent (was green) */
+    --ms-green-dark: #1a1a1a;     /* near-black for headings / hover */
+    --ms-green-deep: #000000;     /* deep accent (table headers, closing) */
+    --ms-ink: #111111;
+    --ms-grey: #595959;
+    --ms-rule: #e5e5e5;
+    --ms-bg-soft: #f5f5f5;
+    --rag-green: #00703C;
+    --rag-amber: #C98A00;
+    --rag-red:   #B3261E;
+    --slide-w: 1280px;
+    --slide-h: 720px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ms-ink);
+    background: #1f1f1f;
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 0 80px 0;
+  }
+  .slide {
+    position: relative;
+    width: var(--slide-w);
+    height: var(--slide-h);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 64px 72px 64px;
+  }
+  /* M&S top stripe */
+  .slide::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    background: var(--ms-green);
+  }
+  /* Brand row */
+  .brand {
+    position: absolute;
+    top: 22px;
+    left: 64px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand .mark {
+    height: 30px;
+    padding: 0 2px;
+    background: transparent;
+    color: #000000;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 19pt;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .brand .lockup {
+    display: flex; flex-direction: column; line-height: 1.1;
+  }
+  .brand .lockup .name {
+    font-weight: 700;
+    color: var(--ms-green-deep);
+    font-size: 11pt;
+    letter-spacing: 0.02em;
+  }
+  .brand .lockup .sub {
+    font-size: 8.5pt;
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  /* Slide footer */
+  .slide-footer {
+    position: absolute;
+    bottom: 22px;
+    left: 64px;
+    right: 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    color: var(--ms-grey);
+    border-top: 2px solid var(--ms-green);
+    padding-top: 8px;
+  }
+  .slide-footer .footer-mark {
+    color: #000000;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: -0.04em;
+  }
+  /* Slide numbers */
+  .slide-num {
+    color: var(--ms-grey);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Headings */
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10pt;
+    color: var(--ms-green-dark);
+    margin: 56px 0 6px 0;
+  }
+  h1.title {
+    font-size: 40pt;
+    line-height: 1.05;
+    margin: 8px 0 16px 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ms-ink);
+    max-width: 1000px;
+  }
+  h2.section {
+    font-size: 26pt;
+    margin: 56px 0 14px 0;
+    font-weight: 700;
+    color: var(--ms-green-deep);
+    letter-spacing: -0.005em;
+  }
+  h2.section .num {
+    color: var(--ms-green);
+    margin-right: 12px;
+    font-weight: 800;
+  }
+  .lead {
+    font-size: 15pt;
+    line-height: 1.45;
+    max-width: 1080px;
+  }
+  .body { font-size: 13pt; line-height: 1.5; }
+  .body ul { margin: 4px 0 0 22px; padding: 0; }
+  .body li { margin: 6px 0; }
+  .small { font-size: 10pt; color: var(--ms-grey); }
+
+  /* Pills */
+  .pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    vertical-align: middle;
+  }
+  .pill.amber { background: var(--rag-amber); }
+  .pill.green { background: var(--rag-green); }
+  .pill.red   { background: var(--rag-red); }
+
+  /* KPI tiles */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 10px;
+  }
+  .kpi {
+    background: var(--ms-bg-soft);
+    border-left: 6px solid var(--ms-green);
+    padding: 18px 20px;
+  }
+  .kpi .num {
+    font-size: 34pt;
+    font-weight: 800;
+    color: var(--ms-green-deep);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .kpi .label {
+    margin-top: 8px;
+    font-size: 11pt;
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .kpi .sub {
+    margin-top: 6px;
+    font-size: 11pt;
+    color: var(--ms-ink);
+  }
+
+  /* Impact panel */
+  .impact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 12px;
+  }
+  .impact-card {
+    border: 1px solid #000000;
+    border-left: 8px solid #000000;
+    background: var(--ms-bg-soft);
+    padding: 22px 26px;
+  }
+  .impact-card .tag {
+    text-transform: uppercase;
+    font-size: 10pt;
+    letter-spacing: 0.16em;
+    color: var(--ms-green-deep);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .impact-card h3 {
+    font-size: 18pt;
+    margin: 0 0 10px 0;
+    color: var(--ms-ink);
+    font-weight: 700;
+  }
+  .impact-card p { margin: 0; font-size: 12.5pt; line-height: 1.5; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 11.5pt;
+  }
+  th, td {
+    border: 1px solid var(--ms-rule);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--ms-green-deep);
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  tbody tr:nth-child(even) td { background: var(--ms-bg-soft); }
+  td.rag-g { background: #e3f1ea !important; }
+  td.rag-a { background: #fbf1dc !important; }
+  td.rag-r { background: #f7e1df !important; }
+
+  /* Title slide */
+  .slide.title-slide {
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, var(--ms-bg-soft) 100%);
+  }
+  .slide.title-slide .meta {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 130px 1fr 130px 1fr;
+    gap: 8px 18px;
+    max-width: 980px;
+    font-size: 12pt;
+  }
+  .slide.title-slide .meta .label {
+    color: var(--ms-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 9.5pt;
+  }
+  .badge-bar {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Closing slide */
+  .slide.closing {
+    background: var(--ms-green-deep);
+    color: #ffffff;
+  }
+  .slide.closing::before { background: #ffffff; }
+  .slide.closing .brand .mark { background: transparent; color: #ffffff; }
+  .slide.closing .brand .lockup .name { color: #ffffff; }
+  .slide.closing .brand .lockup .sub { color: #b8b8b8; }
+  .slide.closing h1.title { color: #ffffff; }
+  .slide.closing .lead { color: #ececec; }
+  .slide.closing .slide-footer {
+    color: #b8b8b8;
+    border-top-color: #ffffff;
+  }
+  .slide.closing .slide-footer .footer-mark { color: #ffffff; }
+
+  /* Print: 1 slide per A4 landscape page, hide deck chrome */
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    body { background: #ffffff; }
+    .deck { padding: 0; gap: 0; }
+    .slide {
+      box-shadow: none;
+      page-break-after: always;
+      width: 297mm;
+      height: 209.5mm;
+      padding: 18mm 22mm 22mm 22mm;
+    }
+    .slide:last-child { page-break-after: auto; }
+    .controls { display: none !important; }
+  }
+
+  /* Presenter mode (one slide at a time, fullscreen) */
+  body.present { background: #000; overflow: hidden; }
+  body.present .deck { padding: 0; gap: 0; }
+  body.present .slide { display: none; }
+  body.present .slide.active {
+    display: flex;
+    transform-origin: top left;
+    box-shadow: none;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11pt;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 1000;
+  }
+  .controls button {
+    background: var(--ms-green);
+    color: #fff;
+    border: 0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+  .controls button:hover { background: var(--ms-green-dark); }
+  .controls .hint { color: #b8b8b8; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button id="presentBtn" title="Toggle presenter mode (P)">Present</button>
+  <button id="printBtn" title="Print / save as PDF">Print</button>
+  <span class="hint">← / → to navigate &middot; P to present &middot; Esc to exit</span>
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1. TITLE -->
+  <section class="slide title-slide" data-slide="1">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup">
+        <span class="name">Marks &amp; Spencer</span>
+        <span class="sub">Technology &middot; Network Engineering</span>
+      </div>
+    </div>
+    <div class="eyebrow">CTO Briefing &middot; Security Automation</div>
+    <h1 class="title">OPA Firewall Policy Compliance Platform<br/><span style="color:var(--ms-green-dark); font-size:24pt; font-weight:600;">What it does, how it works, and business ROI</span></h1>
+    <div class="badge-bar">
+      <span class="pill green">STATUS &middot; LIVE</span>
+      <span class="small">Service operating &middot; public audit UI live &middot; observability hardened &middot; pilot-ready in output-only mode</span>
+    </div>
+    <div class="meta">
+      <div class="label">Audience</div><div>CTO and Technology Leadership</div>
+      <div class="label">Date</div><div>18 June 2026</div>
+      <div class="label">Purpose</div><div>Confirm strategic value and agree pilot-to-scale path</div>
+      <div class="label">Ask</div><div>Maintain output-only pilot, approve integration into firewall change workflow</div>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>OPA Firewall Policy Compliance Platform</span>
+      <span class="slide-num">1 / 10</span>
+    </div>
+  </section>
+
+  <!-- 2. WHAT OPA DOES -->
+  <section class="slide" data-slide="2">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">01</span>What OPA does for M&amp;S</h2>
+    <p class="lead">
+      OPA turns firewall standards into code and evaluates every proposed rule against those standards before change approval, returning a deterministic <strong>Acceptable / Deny</strong> verdict with failed controls, risk level, and remediation guidance.
+    </p>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="num">34</div>
+        <div class="label">Rules audited</div>
+        <div class="sub">Real FortiManager export, end-to-end</div>
+      </div>
+      <div class="kpi">
+        <div class="num">10 / 24</div>
+        <div class="label">Acceptable / Denied</div>
+        <div class="sub">Overall: <strong>NON-COMPLIANT</strong></div>
+      </div>
+      <div class="kpi">
+        <div class="num">213</div>
+        <div class="label">Automated tests</div>
+        <div class="sub">API, policy, UI, observability, safety, and regression controls</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:18px;">Business translation: faster change flow, fewer policy mistakes, stronger audit evidence, and measurable effort/cost savings per rule processed.</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>What OPA does</span>
+      <span class="slide-num">2 / 10</span>
+    </div>
+  </section>
+
+  <!-- 3. BUSINESS VALUE -->
+  <section class="slide" data-slide="3">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">02</span>What this gives the business</h2>
+    <p class="lead">The platform creates value in four ways: faster change, lower operational cost, better audit posture, and lower security exposure.</p>
+    <div class="impact-grid">
+      <div class="impact-card">
+        <div class="tag">Speed</div>
+        <h3>Faster firewall change throughput</h3>
+        <p>Automated standards decisions reduce manual review load and enable network teams to process more changes with less senior-engineer bottleneck.</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">Risk</div>
+        <h3>Lower control failure exposure</h3>
+        <p>Misconfigured or over-permissive rules are identified before release and continuously rechecked across the estate.</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">Compliance</div>
+        <h3>Audit-ready by default</h3>
+        <p>Decisions and evidence are generated by the same policy logic, supporting consistent ISO 27001 and PCI-DSS reporting.</p>
+      </div>
+      <div class="impact-card">
+        <div class="tag">Operating model</div>
+        <h3>Standardised governance at scale</h3>
+        <p>One centrally managed policy set avoids team-by-team interpretation and reduces operational variance across environments.</p>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>Business value</span>
+      <span class="slide-num">3 / 10</span>
+    </div>
+  </section>
+
+  <!-- 4. HOW IT WORKS -->
+  <section class="slide" data-slide="4">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">03</span>How it works (high level)</h2>
+    <table>
+      <thead>
+        <tr><th style="width:8%">Step</th><th style="width:36%">Platform action</th><th>Outcome</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Change request or firewall export enters via API or public upload UI (XLSX, CSV, JSON, XML)</td><td>One consistent intake path for humans, operations teams, and automation</td></tr>
+        <tr><td>2</td><td>Service normalizes payload and enriches metadata (request ID, context, audit fields)</td><td>Every decision becomes traceable and reproducible</td></tr>
+        <tr><td>3</td><td>OPA evaluates against policy-as-code with mandatory M&amp;S NFR baseline plus selectable ISO 27001, CIS v8.1, and PCI-DSS scope</td><td>Deterministic accept/deny with failed controls and explicit standards coverage</td></tr>
+        <tr><td>4</td><td>API/UI returns HTML report, risk band, remediation guidance, and optional cleaned normalised artifact</td><td>Actionable output for approvers, engineers, and audit reviewers</td></tr>
+        <tr><td>5</td><td>Decision history, lifecycle, compliance evidence, and metrics are updated</td><td>Continuous compliance evidence and ROI telemetry</td></tr>
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:14px;">Core design principle: one standards engine for both pre-change guardrails and post-change estate audit, preventing policy drift between teams.</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>How it works</span>
+      <span class="slide-num">4 / 10</span>
+    </div>
+  </section>
+
+  <!-- 5. PLATFORM CAPABILITIES -->
+  <section class="slide" data-slide="5">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">04</span>What has been built</h2>
+    <div class="body">
+      <ul>
+        <li><strong>Decision API:</strong> single, bulk (1-500), and stream (1-5000) evaluation for raw and intake request models.</li>
+        <li><strong>Policy-as-code engine:</strong> unified Rego policy set backing runtime checks and compliance reporting.</li>
+        <li><strong>Frontend audit experience:</strong> public HTTPS upload UI with API-key-gated submissions for self-service firewall policy audit.</li>
+        <li><strong>Multi-vendor import pipeline:</strong> Fortinet XLSX, Palo Alto CSV, and Juniper SRX JSON/XML uploads normalised into one audit path.</li>
+        <li><strong>Compliance scope controls:</strong> always-on M&amp;S NFR baseline with selectable ISO 27001, CIS v8.1, and PCI-DSS standards in the UI.</li>
+        <li><strong>Audit and governance:</strong> HTML report generation, cleaned CSV/JSON artifact export, decision history, lifecycle updates, evidence export, and drift recheck endpoints.</li>
+        <li><strong>Operational controls:</strong> health endpoints, SLO/alert metrics, cache stats, and structured notifications.</li>
+        <li><strong>Resilience hardening:</strong> atomic state writes, startup state drift detection/autocorrect, watchdog and backup jobs.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>Platform capabilities</span>
+      <span class="slide-num">5 / 10</span>
+    </div>
+  </section>
+
+  <!-- 6. CURRENT EVIDENCE -->
+  <section class="slide" data-slide="6">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">05</span>Current evidence snapshot</h2>
+    <table>
+      <thead>
+        <tr><th style="width:34%">Signal</th><th style="width:18%">Current value</th><th>Interpretation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Estate sample audited</td><td>34 rules</td><td>Production-shaped policy baseline established</td></tr>
+        <tr><td>Compliant verdicts</td><td><span class="pill green">10</span></td><td>Known-good pattern set identified and reusable</td></tr>
+        <tr><td>Non-compliant verdicts</td><td><span class="pill red">24</span></td><td>Focused remediation backlog now explicit and prioritizable</td></tr>
+        <tr><td>User-facing audit access</td><td>Public HTTPS UI</td><td>Operations teams can launch audits directly without needing an internal API route</td></tr>
+        <tr><td>Supported import formats</td><td>XLSX / CSV / JSON / XML</td><td>One workflow now covers Fortinet, Palo Alto, and Juniper SRX exports</td></tr>
+        <tr><td>Compliance scope selection</td><td>M&amp;S NFR + 3 optional</td><td>Audits can be run against a mandatory baseline plus user-selected standards</td></tr>
+        <tr><td>Automation reliability</td><td>213 tests</td><td>Broad regression coverage across API, policy, UI, and ops behaviour</td></tr>
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:14px;">The value is not just detection: failed controls are returned with remediation context, enabling direct operational follow-through.</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>Evidence snapshot</span>
+      <span class="slide-num">6 / 10</span>
+    </div>
+  </section>
+
+  <!-- 7. ROI MODEL -->
+  <section class="slide" data-slide="7">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">06</span>ROI model (from live platform constants)</h2>
+    <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="num">21</div>
+        <div class="label">HIPS / rule</div>
+        <div class="sub">Process touches removed</div>
+      </div>
+      <div class="kpi">
+        <div class="num">42h</div>
+        <div class="label">Hours / rule</div>
+        <div class="sub">Manual effort avoided</div>
+      </div>
+      <div class="kpi">
+        <div class="num">GBP 24.04</div>
+        <div class="label">Hourly rate</div>
+        <div class="sub">Model baseline</div>
+      </div>
+      <div class="kpi">
+        <div class="num">GBP 1,009.68</div>
+        <div class="label">Cost saved / rule</div>
+        <div class="sub">42 x GBP 24.04</div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:16px; max-width:1100px;">
+      Annualised model: <strong>cost saved = rules processed x GBP 1,009.68</strong>,
+      <strong>hours saved = rules processed x 42</strong>,
+      <strong>FTE redeployed = hours saved / 2080</strong>.
+    </p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>ROI model</span>
+      <span class="slide-num">7 / 10</span>
+    </div>
+  </section>
+
+  <!-- 8. ROI SCENARIOS -->
+  <section class="slide" data-slide="8">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">07</span>ROI scenarios (illustrative annualised)</h2>
+    <table>
+      <thead>
+        <tr><th style="width:18%">Scenario</th><th style="width:18%">Rules / month</th><th style="width:16%">Rules / year</th><th style="width:20%">Hours saved / year</th><th style="width:14%">FTE equiv.</th><th>Cost saved / year</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Conservative</td><td>250</td><td>3,000</td><td>126,000</td><td>60.6</td><td>GBP 3,029,040</td></tr>
+        <tr><td>Expected</td><td>500</td><td>6,000</td><td>252,000</td><td>121.2</td><td>GBP 6,058,080</td></tr>
+        <tr><td>Scaled</td><td>1,000</td><td>12,000</td><td>504,000</td><td>242.3</td><td>GBP 12,116,160</td></tr>
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:12px;">These scenarios show gross capacity and cost potential. Finance-calibrated net ROI should apply implementation/run costs and a realisation factor during pilot review.</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>ROI scenarios</span>
+      <span class="slide-num">8 / 10</span>
+    </div>
+  </section>
+
+  <!-- 9. STATUS -->
+  <section class="slide" data-slide="9">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h2 class="section"><span class="num">08</span>Delivery and operating status</h2>
+    <table>
+      <thead>
+        <tr><th style="width:26%">Workstream</th><th style="width:10%">RAG</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Core decision service</td><td class="rag-g"><span class="pill green">Green</span></td><td>Live API supporting single, bulk, stream, and estate-audit report workflows</td></tr>
+        <tr><td>Policy and compliance logic</td><td class="rag-g"><span class="pill green">Green</span></td><td>Standards mapped in policy-as-code with mandatory M&amp;S baseline and optional ISO/CIS/PCI selection live</td></tr>
+        <tr><td>Frontend and import experience</td><td class="rag-g"><span class="pill green">Green</span></td><td>Public audit UI live with multi-format upload, cleaned artifact export, and standards selection</td></tr>
+        <tr><td>Observability and reliability</td><td class="rag-g"><span class="pill green">Green</span></td><td>Prom/Grafana coverage, watchdogs, backups, and state-drift controls active</td></tr>
+        <tr><td>Security hardening</td><td class="rag-g"><span class="pill green">Green</span></td><td>Public page exposure is separated from submission auth; API-key gating, validation, rate controls, and deployment guardrails are in place</td></tr>
+        <tr><td>Change workflow integration</td><td class="rag-a"><span class="pill amber">Amber</span></td><td>Output-only pilot mode active; self-service intake is complete, enforcement handoff still to be phased</td></tr>
+        <tr><td>Finance realisation model</td><td class="rag-a"><span class="pill amber">Amber</span></td><td>Requires agreed realisation factor and cost baseline sign-off</td></tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>Operating status</span>
+      <span class="slide-num">9 / 10</span>
+    </div>
+  </section>
+
+  <!-- 10. CLOSING -->
+  <section class="slide closing" data-slide="10">
+    <div class="brand">
+      <div class="mark">M&amp;S</div>
+      <div class="lockup"><span class="name">Marks &amp; Spencer</span><span class="sub">Technology &middot; Network Engineering</span></div>
+    </div>
+    <h1 class="title" style="margin-top:120px;">In one line</h1>
+    <p class="lead" style="margin-top:20px;">OPA gives M&amp;S a single policy decision engine that makes firewall governance faster, more consistent, auditable, and economically measurable.</p>
+    <p class="lead" style="margin-top:32px;"><strong>Outcome:</strong> proven platform, visible risk reduction, and a quantified ROI model that scales with change volume.</p>
+    <div class="slide-footer">
+      <span><span class="footer-mark">M&amp;S</span> &nbsp;Technology &middot; Network Engineering</span>
+      <span>OPA Firewall Policy Compliance Platform</span>
+      <span class="slide-num">11 / 10</span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var idx = 0;
+    var presenting = false;
+
+    function fitSlide() {
+      if (!presenting) {
+        slides.forEach(function (s) { s.style.transform = ''; s.style.width = ''; s.style.height = ''; });
+        return;
+      }
+      var s = slides[idx];
+      if (!s) return;
+      var sw = 1280, sh = 720;
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var scale = Math.min(vw / sw, vh / sh);
+      s.style.transform = 'scale(' + scale + ')';
+      s.style.transformOrigin = 'top left';
+      s.style.position = 'absolute';
+      s.style.top = ((vh - sh * scale) / 2) + 'px';
+      s.style.left = ((vw - sw * scale) / 2) + 'px';
+    }
+
+    function show(i) {
+      idx = Math.max(0, Math.min(slides.length - 1, i));
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === idx); });
+      fitSlide();
+    }
+
+    function enterPresent() {
+      presenting = true;
+      document.body.classList.add('present');
+      show(idx);
+    }
+    function exitPresent() {
+      presenting = false;
+      document.body.classList.remove('present');
+      slides.forEach(function (s) {
+        s.classList.remove('active');
+        s.style.transform = ''; s.style.position = ''; s.style.top = ''; s.style.left = '';
+      });
+    }
+    function togglePresent() { presenting ? exitPresent() : enterPresent(); }
+
+    document.getElementById('presentBtn').addEventListener('click', togglePresent);
+    document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'p' || e.key === 'P') { togglePresent(); }
+      else if (e.key === 'Escape') { if (presenting) exitPresent(); }
+      else if (presenting && (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ')) { e.preventDefault(); show(idx + 1); }
+      else if (presenting && (e.key === 'ArrowLeft' || e.key === 'PageUp')) { e.preventDefault(); show(idx - 1); }
+      else if (presenting && (e.key === 'Home')) { show(0); }
+      else if (presenting && (e.key === 'End')) { show(slides.length - 1); }
+    });
+
+    window.addEventListener('resize', fitSlide);
+  })();
+</script>
+</body>
+</html>

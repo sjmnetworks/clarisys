@@ -1,0 +1,124 @@
+{
+  "requests": [
+    {
+      "request_id": "stream-acc-001",
+      "source": "10.157.26.5",
+      "destination": "10.221.126.33",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "finance-src",
+      "destination_interface": "analytics-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "request_id": "stream-acc-002",
+      "source": "10.157.26.6",
+      "destination": "10.221.126.34",
+      "protocol": "tcp",
+      "port": 8443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "retail-src",
+      "destination_interface": "ops-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "request_id": "stream-acc-003",
+      "source": "10.157.26.7",
+      "destination": "10.221.126.35",
+      "protocol": "tcp",
+      "port": 8081,
+      "log": "utm",
+      "action": "accept",
+      "source_interface": "pricing-src",
+      "destination_interface": "inventory-dst",
+      "data_classification": "Public"
+    },
+    {
+      "request_id": "stream-acc-004",
+      "source": "10.157.26.8",
+      "destination": "10.221.126.36",
+      "protocol": "tcp",
+      "port": 9443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "warehouse-src",
+      "destination_interface": "forecast-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "request_id": "stream-acc-005",
+      "source": "10.157.26.9",
+      "destination": "10.221.126.37",
+      "protocol": "udp",
+      "port": 53,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "store-src",
+      "destination_interface": "dns-dst",
+      "data_classification": "Public"
+    },
+    {
+      "request_id": "stream-acc-006",
+      "source": "10.157.26.10",
+      "destination": "10.221.126.38",
+      "protocol": "icmp",
+      "port": 0,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "monitoring-src",
+      "destination_interface": "network-dst",
+      "data_classification": "Public"
+    },
+    {
+      "request_id": "stream-acc-007",
+      "source": "10.157.26.11",
+      "destination": "10.221.126.39",
+      "protocol": "tcp",
+      "port": 22,
+      "log": "utm",
+      "action": "accept",
+      "source_interface": "admin-src",
+      "destination_interface": "jump-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "request_id": "stream-acc-008",
+      "source": "10.157.26.12",
+      "destination": "10.221.126.40",
+      "protocol": "tcp",
+      "port": 3306,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "etl-src",
+      "destination_interface": "database-dst",
+      "data_classification": "Internal"
+    },
+    {
+      "request_id": "stream-acc-009",
+      "source": "10.157.26.13",
+      "destination": "10.221.126.41",
+      "protocol": "udp",
+      "port": 123,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "time-src",
+      "destination_interface": "ntp-dst",
+      "data_classification": "Public"
+    },
+    {
+      "request_id": "stream-acc-010",
+      "source": "10.157.26.14",
+      "destination": "10.221.126.42",
+      "protocol": "tcp",
+      "port": 443,
+      "log": "all",
+      "action": "accept",
+      "source_interface": "api-src",
+      "destination_interface": "internal-service-dst",
+      "data_classification": "Internal"
+    }
+  ]
+}

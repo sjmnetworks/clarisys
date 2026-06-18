@@ -1,0 +1,357 @@
+{
+  "_metadata": {
+    "framework": "M&S Security NFR Compliance Framework",
+    "version": "1.0",
+    "effective_date": "2026-05-15",
+    "standards": ["CIS_v8.1_IG3", "ISO_27001", "NIST_CSF", "PCI_DSS_v3.2.1"],
+    "domains": ["Identity & Access Management", "Data Security", "Cloud Security (Azure)"]
+  },
+
+  "iam_controls": {
+    "iam_1_unified_identity": {
+      "id": "IAM-1",
+      "title": "Unified Identity & MFA",
+      "description": "All users/admins authenticate via centralised identity with MFA. No legacy auth.",
+      "standards": ["CIS_5", "CIS_6"],
+      "checks": [
+        "identity_method_centralized",
+        "mfa_enforced_for_all_users",
+        "no_legacy_authentication"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Prevents unauthorized access via weak or legacy authentication"
+    },
+    "iam_2_least_privilege": {
+      "id": "IAM-2",
+      "title": "Least Privilege RBAC",
+      "description": "Identities have minimum permissions. No standing admin roles.",
+      "standards": ["CIS_5", "CIS_6"],
+      "checks": [
+        "rbac_enforced",
+        "no_standing_admin_roles",
+        "permission_scope_minimal"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Limits blast radius of compromised credentials"
+    },
+    "iam_3_pam": {
+      "id": "IAM-3",
+      "title": "Privileged Access Management (PIM)",
+      "description": "Elevated permissions use PIM with approval, justification, expiry.",
+      "standards": ["CIS_5"],
+      "checks": [
+        "privileged_access_requires_approval",
+        "access_request_justification_required",
+        "privileged_access_time_limited"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Ensures accountability for privileged operations"
+    },
+    "iam_4_auto_provisioning": {
+      "id": "IAM-4",
+      "title": "Auto-provisioned/removed access (Joiner-Mover-Leaver)",
+      "description": "Access provisioned/removed automatically via JML processes.",
+      "standards": ["CIS_5"],
+      "checks": [
+        "identity_auto_provisioning_on_hire",
+        "access_auto_removal_on_termination",
+        "role_modification_tracking"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Prevents orphaned access for terminated employees"
+    },
+    "iam_6_break_glass": {
+      "id": "IAM-6",
+      "title": "Break-Glass Accounts",
+      "description": "Strong passwords (≥16 chars), monitored, securely stored.",
+      "standards": ["CIS_5"],
+      "checks": [
+        "break_glass_password_length_min_16",
+        "break_glass_monitored_for_usage",
+        "break_glass_stored_offline"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Provides emergency access when primary auth unavailable"
+    },
+    "iam_8_identity_logging": {
+      "id": "IAM-8",
+      "title": "Identity Logging",
+      "description": "Logs retained centrally minimum 180 days, monitored for anomalies.",
+      "standards": ["CIS_8"],
+      "checks": [
+        "identity_logs_retained_180_days",
+        "identity_logs_centralized",
+        "identity_logs_monitored_for_anomalies"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Enables audit trail and threat detection"
+    },
+    "iam_9_access_recertification": {
+      "id": "IAM-9",
+      "title": "Access Recertification",
+      "description": "Privileged/high-risk access recertified quarterly.",
+      "standards": ["CIS_6"],
+      "checks": [
+        "privileged_access_quarterly_review",
+        "high_risk_access_quarterly_review",
+        "recertification_evidence_retained"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Prevents permission creep and unauthorized access"
+    }
+  },
+
+  "data_security_controls": {
+    "data_01_classification": {
+      "id": "Data-01",
+      "title": "Data Classification",
+      "description": "All data classified (Public/Internal/Confidential/Highly Confidential) with owners.",
+      "standards": ["CIS_3"],
+      "checks": [
+        "data_has_classification_label",
+        "data_classification_valid",
+        "data_owner_assigned"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Enables appropriate protection controls per data sensitivity"
+    },
+    "data_10_external_sharing": {
+      "id": "Data-10",
+      "title": "Data Sharing Controls",
+      "description": "External data sharing encrypted (TLS 1.2+), contractually governed.",
+      "standards": ["CIS_3", "CIS_15"],
+      "checks": [
+        "external_data_sharing_encrypted",
+        "external_sharing_tls_version_1_2_minimum",
+        "external_sharing_contractually_governed"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Protects sensitive data in transit to external parties"
+    },
+    "data_11_test_data": {
+      "id": "Data-11",
+      "title": "Test Data Security",
+      "description": "Non-prod must not use production data unless anonymized/masked.",
+      "standards": ["CIS_3", "CIS_16"],
+      "checks": [
+        "test_environment_no_live_data",
+        "test_data_anonymized_or_masked",
+        "test_data_classification_applied"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Prevents accidental data exposure in non-production environments"
+    },
+    "encryption_at_rest": {
+      "id": "Enc-Rest",
+      "title": "Encryption at Rest",
+      "description": "All storage/DBs/filesystems encrypted AES-256.",
+      "standards": ["CIS_3"],
+      "checks": [
+        "storage_encrypted_aes256",
+        "database_encrypted_aes256",
+        "filesystem_encrypted_aes256"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Protects data confidentiality if storage is compromised"
+    },
+    "encryption_in_transit": {
+      "id": "Enc-Transit",
+      "title": "Encryption in Transit",
+      "description": "TLS 1.2+ for all traffic; no plaintext protocols.",
+      "standards": ["CIS_3"],
+      "checks": [
+        "tls_version_1_2_minimum",
+        "no_plaintext_protocols_allowed",
+        "certificate_validation_enforced"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Protects data confidentiality during network transmission"
+    },
+    "backup_security": {
+      "id": "Backup",
+      "title": "Backup Security",
+      "description": "Encrypted, immutable, geographically distributed, regularly tested.",
+      "standards": ["CIS_10"],
+      "checks": [
+        "backups_encrypted",
+        "backups_immutable",
+        "backups_geo_distributed",
+        "backups_regularly_tested"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Enables recovery from ransomware and disasters"
+    }
+  },
+
+  "cloud_security_controls": {
+    "cloud_01_guardrails": {
+      "id": "Cloud-01",
+      "title": "Azure Guardrails",
+      "description": "Policies enforce logging, encryption, allowed locations, tagging.",
+      "standards": ["CIS_4", "CIS_7"],
+      "checks": [
+        "azure_policy_logging_enforced",
+        "azure_policy_encryption_enforced",
+        "azure_policy_location_restricted",
+        "azure_policy_tagging_required"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Prevents misconfigured cloud resources at deployment time"
+    },
+    "cloud_02_private_endpoints": {
+      "id": "Cloud-02",
+      "title": "Private Endpoints Only",
+      "description": "PaaS services use private endpoints; public access disabled.",
+      "standards": ["CIS_12"],
+      "checks": [
+        "paas_private_endpoint_enabled",
+        "paas_public_access_disabled",
+        "paas_network_isolation_enforced"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Restricts PaaS access to private networks only"
+    },
+    "cloud_03_managed_identities": {
+      "id": "Cloud-03",
+      "title": "Managed Identities",
+      "description": "Workloads use Managed Identity instead of secrets/credentials.",
+      "standards": ["CIS_5", "CIS_6", "CIS_16"],
+      "checks": [
+        "workload_uses_managed_identity",
+        "no_plaintext_secrets_in_code",
+        "secret_rotation_enabled"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Eliminates credential management burden and reduces exposure"
+    },
+    "cloud_04_keyvault_hardening": {
+      "id": "Cloud-04",
+      "title": "Key Vault Hardening",
+      "description": "Enforce soft delete, purge protection, private access, rotation, logging.",
+      "standards": ["CIS_3"],
+      "checks": [
+        "keyvault_soft_delete_enabled",
+        "keyvault_purge_protection_enabled",
+        "keyvault_private_endpoint_only",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Protects encryption keys from accidental/malicious deletion"
+    },
+    "cloud_06_cspm": {
+      "id": "Cloud-06",
+      "title": "Cloud Security Posture Management (CSPM)",
+      "description": "Continuous scanning for misconfigurations; high/critical issues in SLA.",
+      "standards": ["CIS_4", "CIS_7"],
+      "checks": [
+        "cspm_continuous_scanning_enabled",
+        "cspm_critical_findings_sla_enforced",
+        "cspm_remediation_tracking"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Identifies and remediates cloud misconfigurations proactively"
+    },
+    "cloud_08_network_isolation": {
+      "id": "Cloud-08",
+      "title": "Network Isolation",
+      "description": "Segmented VNets, deny-by-default NSGs, no open inbound ports.",
+      "standards": ["CIS_12"],
+      "checks": [
+        "vnets_segmented_by_tier",
+        "nsg_deny_by_default_inbound",
+        "nsg_no_open_inbound_ports",
+        "nsg_explicit_allow_rules_only"
+      ],
+      "severity": "CRITICAL",
+      "business_impact": "Implements zero-trust network segmentation"
+    },
+    "cloud_09_admin_action_logging": {
+      "id": "Cloud-09",
+      "title": "Admin Action Logging",
+      "description": "Create/Update/Delete operations logged and monitored.",
+      "standards": ["CIS_8", "CIS_17"],
+      "checks": [
+        "admin_create_operations_logged",
+        "admin_update_operations_logged",
+        "admin_delete_operations_logged",
+        "admin_actions_monitored_for_anomalies"
+      ],
+      "severity": "HIGH",
+      "business_impact": "Provides audit trail for privileged operations"
+    }
+  },
+
+  "required_fields_by_domain": {
+    "firewall_rules": [
+      "name",
+      "action",
+      "source",
+      "destination",
+      "services",
+      "protocol",
+      "encryption_required",
+      "tls_version_minimum",
+      "logging_enabled",
+      "comments"
+    ],
+    "data_flows": [
+      "source_system",
+      "destination_system",
+      "data_classification",
+      "encryption_in_transit",
+      "encryption_at_rest",
+      "approved_external_sharing"
+    ],
+    "cloud_resources": [
+      "resource_type",
+      "location",
+      "environment",
+      "tags",
+      "encryption_enabled",
+      "logging_enabled",
+      "network_isolation",
+      "managed_identity_enabled"
+    ],
+    "identity_operations": [
+      "user_id",
+      "operation_type",
+      "action",
+      "timestamp",
+      "justification",
+      "approver",
+      "approval_status"
+    ]
+  },
+
+  "severity_levels": {
+    "CRITICAL": {
+      "description": "Security impact - must be resolved immediately",
+      "sla_days": 1,
+      "examples": ["encryption failures", "authentication bypass", "unlogged privileged access"]
+    },
+    "HIGH": {
+      "description": "Compliance impact - should be resolved within one quarter",
+      "sla_days": 30,
+      "examples": ["missing audit logs", "overly permissive rules", "outdated encryption"]
+    },
+    "MEDIUM": {
+      "description": "Standards deviation - address in next planning cycle",
+      "sla_days": 90,
+      "examples": ["documentation gaps", "test data issues"]
+    }
+  },
+
+  "tls_versions": {
+    "1.0": {"supported": false, "reason": "Deprecated and broken"},
+    "1.1": {"supported": false, "reason": "Deprecated (end-of-life 2020)"},
+    "1.2": {"supported": true, "reason": "Minimum acceptable version"},
+    "1.3": {"supported": true, "reason": "Recommended"}
+  },
+
+  "encryption_standards": {
+    "aes_256_required": true,
+    "rsa_minimum_key_length": 2048,
+    "ecc_minimum_curve": "P-256"
+  }
+}
