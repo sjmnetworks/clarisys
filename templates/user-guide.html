@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide — Clarisys Firewall Compliance</title>
+  <style>
+    :root {
+      --black: #04342C;
+      --charcoal: #085041;
+      --line: #D3D1C7;
+      --bg: #E1F5EE;
+      --surface: #ffffff;
+      --muted: #5F5E5A;
+      --ok: #1D9E75;
+      --bad: #b02a2a;
+      --primary: #0F6E56;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--charcoal);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 36px auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 26px rgba(17, 17, 17, 0.08);
+    }
+
+    .top {
+      background: var(--primary);
+      color: #E1F5EE;
+      padding: 14px 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .top a {
+      color: #E1F5EE;
+      text-decoration: none;
+      opacity: 0.85;
+      font-size: 0.72rem;
+    }
+
+    .top a:hover { opacity: 1; text-decoration: underline; }
+
+    .content {
+      padding: 32px 28px 40px;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 500;
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.35rem;
+      color: var(--black);
+      margin-top: 32px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h3 {
+      font-size: 1rem;
+      color: var(--charcoal);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    p, li {
+      color: #2C2C2A;
+      margin-bottom: 10px;
+      font-size: 0.94rem;
+    }
+
+    ul, ol {
+      padding-left: 22px;
+      margin-bottom: 14px;
+    }
+
+    code {
+      background: #f4f4f2;
+      border: 1px solid var(--line);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      color: var(--black);
+    }
+
+    .format-card {
+      border: 1px solid var(--line);
+      background: #fafafa;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .format-card h4 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .format-card p {
+      margin-bottom: 6px;
+    }
+
+    .vendor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .vendor-card {
+      border: 1px solid var(--line);
+      padding: 16px;
+      background: #fff;
+    }
+
+    .vendor-card h4 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .vendor-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .vendor-card li {
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.88rem;
+    }
+
+    thead { background: var(--black); color: #fff; }
+
+    th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 700;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ececec;
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) { background: #fcfcfc; }
+
+    .rag-example {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-right: 6px;
+    }
+
+    .rag-low { background: #1f6f3f; }
+    .rag-medium { background: #e8a500; }
+    .rag-high { background: #b02a2a; }
+    .rag-critical { background: #8b0000; }
+
+    .tip {
+      background: #f0faf5;
+      border: 1px solid rgba(15, 110, 86, 0.25);
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.88rem;
+    }
+
+    .tip strong {
+      color: var(--primary);
+    }
+
+    .screenshot-placeholder {
+      border: 2px dashed var(--line);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 14px 0;
+    }
+
+    .toc {
+      background: #fafafa;
+      border: 1px solid var(--line);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .toc h3 {
+      margin: 0 0 10px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .toc li {
+      margin-bottom: 4px;
+      font-size: 0.88rem;
+    }
+
+    .toc a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    footer {
+      background: #f5f5f5;
+      padding: 14px 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <span>Clarisys Firewall Compliance — User Guide</span>
+      <a href="/audit/ui">← Back to Upload</a>
+    </div>
+    <div class="content">
+      <h1>User Guide</h1>
+      <p class="subtitle">How to upload firewall policies, which vendors and formats are supported, and how to interpret the compliance reports.</p>
+
+      <div class="toc">
+        <h3>Contents</h3>
+        <ol>
+          <li><a href="#upload-formats">Supported Upload Formats</a></li>
+          <li><a href="#vendors">Supported Vendors</a></li>
+          <li><a href="#how-to-upload">How to Upload</a></li>
+          <li><a href="#standards">Compliance Standards</a></li>
+          <li><a href="#report-layout">Report Layout</a></li>
+          <li><a href="#reading-results">Reading the Results</a></li>
+          <li><a href="#rag-badges">RAG Status Badges</a></li>
+          <li><a href="#cleaned-artifacts">Cleaned Artifacts</a></li>
+          <li><a href="#api-endpoints">API Endpoints</a></li>
+        </ol>
+      </div>
+
+      <!-- ─── Upload Formats ──────────────────────────────────────── -->
+      <h2 id="upload-formats">1. Supported Upload Formats</h2>
+      <p>The system accepts firewall policy exports in four file formats:</p>
+
+      <div class="format-card">
+        <h4>.xlsx — Excel Workbook</h4>
+        <p>Uses the <strong>first worksheet</strong>. Expected columns: source, destination, protocol, port, action, log. Header names are flexible (case-insensitive, common aliases accepted).</p>
+      </div>
+
+      <div class="format-card">
+        <h4>.csv — Comma-Separated Values</h4>
+        <p>Auto-detects schema from headers. Supports both generic firewall rule CSVs and vendor-specific Palo Alto exports with zone/application columns. UTF-8 encoding expected.</p>
+      </div>
+
+      <div class="format-card">
+        <h4>.json — JSON Policy Export</h4>
+        <p>Juniper SRX JSON format. Must contain the security policy hierarchy with from-zone, to-zone, match criteria, and actions.</p>
+      </div>
+
+      <div class="format-card">
+        <h4>.xml — XML Policy Export</h4>
+        <p>Juniper SRX XML format. Standard <code>&lt;security&gt;&lt;policies&gt;</code> hierarchy as returned by <code>show security policies | display xml</code>.</p>
+      </div>
+
+      <div class="tip">
+        <strong>Tip:</strong> The header row is required for CSV/XLSX. Files without a recognisable header will be rejected with a 400 error.
+      </div>
+
+      <!-- ─── Vendors ─────────────────────────────────────────────── -->
+      <h2 id="vendors">2. Supported Vendors</h2>
+
+      <div class="vendor-grid">
+        <div class="vendor-card">
+          <h4>Palo Alto Networks</h4>
+          <ul>
+            <li>CSV export from Panorama or NGFW</li>
+            <li>Auto-detected via column headers (Source Zone, Destination Zone, Application, Service, etc.)</li>
+            <li>Multi-value fields (e.g. multiple zones) — first token is used</li>
+            <li>Application-default service mapping supported</li>
+          </ul>
+        </div>
+
+        <div class="vendor-card">
+          <h4>Juniper SRX</h4>
+          <ul>
+            <li>JSON export (<code>show security policies | display json</code>)</li>
+            <li>XML export (<code>show security policies | display xml</code>)</li>
+            <li>Supports from-zone/to-zone, match addresses, applications, actions</li>
+            <li>Nested policy structures automatically flattened</li>
+          </ul>
+        </div>
+
+        <div class="vendor-card">
+          <h4>Generic / Other Vendors</h4>
+          <ul>
+            <li>CSV or XLSX with standard columns</li>
+            <li>Required: source, destination, protocol, port, action</li>
+            <li>Optional: log, rule_name, source_interface, destination_interface</li>
+            <li>Works for Check Point, Fortinet, Cisco ACL exports (when formatted as CSV)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ─── How to Upload ───────────────────────────────────────── -->
+      <h2 id="how-to-upload">3. How to Upload</h2>
+      <ol>
+        <li>Go to the <a href="/audit/ui">Upload page</a>.</li>
+        <li>Enter your <strong>API Key</strong> (provided by your administrator).</li>
+        <li>Select the firewall policy file (.xlsx, .csv, .json, or .xml).</li>
+        <li>Choose which <strong>compliance standards</strong> to evaluate against (ISO 27001, CIS v8.1, PCI-DSS).</li>
+        <li>Optionally enable <strong>"Download cleaned artifact"</strong> for a normalised version of your data (CSV or JSON).</li>
+        <li>Click <strong>Generate Report</strong>.</li>
+        <li>The HTML compliance report downloads automatically. If cleaned artifact is enabled, that also downloads.</li>
+      </ol>
+
+      <div class="tip">
+        <strong>Tip:</strong> Maximum upload size is 5 MB. For very large rulesets, split into multiple files (max 500 rules per file recommended).
+      </div>
+
+      <!-- ─── Standards ───────────────────────────────────────────── -->
+      <h2 id="standards">4. Compliance Standards</h2>
+      <p>Each rule is evaluated against the selected standards. Available frameworks:</p>
+
+      <table>
+        <thead>
+          <tr><th>Standard</th><th>Scope</th><th>Key Controls Checked</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ISO 27001</strong></td>
+            <td>Information security management</td>
+            <td>Logging enabled, deny-by-default, no overly permissive rules, source/destination specificity</td>
+          </tr>
+          <tr>
+            <td><strong>CIS v8.1</strong></td>
+            <td>Critical security controls</td>
+            <td>Protocol restrictions, port hygiene, action validation, network segmentation indicators</td>
+          </tr>
+          <tr>
+            <td><strong>PCI-DSS</strong></td>
+            <td>Payment card data protection</td>
+            <td>Explicit deny rules, logging on all permit rules, restricted high-risk ports, no "any/any" rules</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ─── Report Layout ───────────────────────────────────────── -->
+      <h2 id="report-layout">5. Report Layout</h2>
+      <p>The downloaded HTML report contains these sections:</p>
+
+      <h3>Header &amp; Metadata</h3>
+      <p>Shows generation timestamp, detected schema type, and overall compliance status (COMPLIANT / NON-COMPLIANT).</p>
+
+      <h3>Summary Statistics</h3>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Total rules evaluated</td><td>Number of valid rules processed from your file</td></tr>
+          <tr><td>Acceptable</td><td>Rules that passed all selected compliance checks</td></tr>
+          <tr><td>Requires remediation</td><td>Rules that failed one or more controls</td></tr>
+          <tr><td>Invalid rows</td><td>Rows that couldn't be parsed (bad format, missing fields)</td></tr>
+          <tr><td>Overall status</td><td>COMPLIANT if zero denied + zero invalid; NON-COMPLIANT otherwise</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Failed Controls Table</h3>
+      <p>Lists each control that was violated and how many rules triggered it. Use this to prioritise remediation — fix the most frequent control failures first.</p>
+
+      <h3>Failed Standards Table</h3>
+      <p>Shows which standards had the most violations, helping you understand which compliance programme has the biggest gaps.</p>
+
+      <h3>Per-Rule Findings</h3>
+      <p>Every evaluated rule gets its own section showing:</p>
+      <ul>
+        <li><strong>Row number</strong> (matches your original file)</li>
+        <li><strong>Verdict:</strong> ACCEPTABLE or REQUIRES REMEDIATION</li>
+        <li><strong>Risk level:</strong> LOW, MEDIUM, HIGH, or CRITICAL</li>
+        <li><strong>Target:</strong> source → destination protocol/port</li>
+        <li><strong>Reason:</strong> Why it passed or failed</li>
+        <li><strong>Controls failed:</strong> Specific control IDs that triggered</li>
+        <li><strong>Standards failed:</strong> Which frameworks the rule violates</li>
+      </ul>
+
+      <!-- ─── Reading Results ─────────────────────────────────────── -->
+      <h2 id="reading-results">6. Reading the Results</h2>
+
+      <h3>Verdicts</h3>
+      <table>
+        <thead>
+          <tr><th>Verdict</th><th>Meaning</th><th>Action Required</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ACCEPTABLE</strong></td>
+            <td>Rule passes all selected compliance checks</td>
+            <td>None — rule is compliant</td>
+          </tr>
+          <tr>
+            <td><strong>REQUIRES REMEDIATION</strong></td>
+            <td>Rule fails one or more controls</td>
+            <td>Review the listed controls and modify the rule accordingly</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Common Failure Reasons</h3>
+      <ul>
+        <li><strong>Logging not enabled:</strong> Rule has log set to "none" or missing — enable logging on all permit rules</li>
+        <li><strong>Overly permissive source/destination:</strong> Using "any" — restrict to specific addresses or ranges</li>
+        <li><strong>High-risk port without restriction:</strong> Sensitive ports (e.g. 23/telnet, 21/ftp) should be denied or tightly scoped</li>
+        <li><strong>Missing explicit deny:</strong> Rulesets should end with a deny-all to enforce least-privilege</li>
+      </ul>
+
+      <!-- ─── RAG Badges ──────────────────────────────────────────── -->
+      <h2 id="rag-badges">7. RAG Status Badges</h2>
+      <p>Each per-rule finding includes a coloured badge indicating risk severity:</p>
+
+      <p style="margin-top:12px;">
+        <span class="rag-example rag-low">LOW</span>
+        <span class="rag-example rag-medium">MEDIUM</span>
+        <span class="rag-example rag-high">HIGH</span>
+        <span class="rag-example rag-critical">CRITICAL</span>
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Badge</th><th>Risk Level</th><th>Guidance</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="rag-example rag-low">LOW</span></td><td>Minimal risk</td><td>Minor observation, acceptable in most contexts</td></tr>
+          <tr><td><span class="rag-example rag-medium">MEDIUM</span></td><td>Moderate risk</td><td>Should be reviewed; may need tightening depending on environment</td></tr>
+          <tr><td><span class="rag-example rag-high">HIGH</span></td><td>Significant risk</td><td>Remediation recommended before deployment</td></tr>
+          <tr><td><span class="rag-example rag-critical">CRITICAL</span></td><td>Severe risk</td><td>Must be fixed immediately — potential for direct exploitation</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ─── Cleaned Artifacts ───────────────────────────────────── -->
+      <h2 id="cleaned-artifacts">8. Cleaned Artifacts</h2>
+      <p>When you enable "Download cleaned artifact", the system produces a normalised version of your rules:</p>
+      <ul>
+        <li><strong>CSV format:</strong> Standard columns (source, destination, protocol, port, action, log) regardless of input vendor format</li>
+        <li><strong>JSON format:</strong> Array of normalised rule objects with consistent field names</li>
+      </ul>
+      <p>Invalid rows are excluded from the cleaned output. Use this artifact to import rules into other systems or compare normalised data across vendors.</p>
+
+      <!-- ─── API Endpoints ───────────────────────────────────────── -->
+      <h2 id="api-endpoints">9. API Endpoints (for automation)</h2>
+      <p>All endpoints require an <code>X-API-Key</code> header. Responses include audit headers for traceability.</p>
+
+      <table>
+        <thead>
+          <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Returns</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/audit/csv</code></td><td>POST</td><td>CSV file body</td><td>JSON verdict summary</td></tr>
+          <tr><td><code>/audit/csv/html</code></td><td>POST</td><td>CSV file body</td><td>HTML compliance report</td></tr>
+          <tr><td><code>/audit/csv/cleaned</code></td><td>POST</td><td>CSV file body</td><td>Normalised CSV or JSON</td></tr>
+          <tr><td><code>/audit/xlsx</code></td><td>POST</td><td>XLSX file upload</td><td>HTML compliance report</td></tr>
+          <tr><td><code>/audit/xlsx/cleaned</code></td><td>POST</td><td>XLSX file upload</td><td>Normalised CSV or JSON</td></tr>
+          <tr><td><code>/audit/json/html</code></td><td>POST</td><td>JSON or XML file body</td><td>HTML compliance report</td></tr>
+          <tr><td><code>/audit/json/cleaned</code></td><td>POST</td><td>JSON or XML file body</td><td>Normalised CSV or JSON</td></tr>
+          <tr><td><code>/audit/ui</code></td><td>GET</td><td>—</td><td>Upload web interface</td></tr>
+          <tr><td><code>/guide</code></td><td>GET</td><td>—</td><td>This user guide</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip">
+        <strong>Tip:</strong> For the CSV and JSON endpoints, send the file content as the raw request body with <code>Content-Type: text/csv</code> or <code>application/json</code>. For XLSX, use multipart form upload.
+      </div>
+    </div>
+    <footer>Clarisys Firewall Compliance Platform &bull; User Guide</footer>
+  </div>
+</body>
+</html>
