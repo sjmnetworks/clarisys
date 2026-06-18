@@ -6,6 +6,12 @@ __pycache__/
 *.log
 .DS_Store
 
+# Terraform
+infra/tfplan
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/.terraform/
+
 # Local audit inputs/outputs
 Firewall Policy.csv
 compliance-report.md

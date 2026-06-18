@@ -289,7 +289,6 @@
           <li><a href="#reading-results">Reading the Results</a></li>
           <li><a href="#rag-badges">RAG Status Badges</a></li>
           <li><a href="#cleaned-artifacts">Cleaned Artifacts</a></li>
-          <li><a href="#api-endpoints">API Endpoints</a></li>
         </ol>
       </div>
 
@@ -500,30 +499,6 @@
       </ul>
       <p>Invalid rows are excluded from the cleaned output. Use this artifact to import rules into other systems or compare normalised data across vendors.</p>
 
-      <!-- ─── API Endpoints ───────────────────────────────────────── -->
-      <h2 id="api-endpoints">9. API Endpoints (for automation)</h2>
-      <p>All endpoints require an <code>X-API-Key</code> header. Responses include audit headers for traceability.</p>
-
-      <table>
-        <thead>
-          <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Returns</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>/audit/csv</code></td><td>POST</td><td>CSV file body</td><td>JSON verdict summary</td></tr>
-          <tr><td><code>/audit/csv/html</code></td><td>POST</td><td>CSV file body</td><td>HTML compliance report</td></tr>
-          <tr><td><code>/audit/csv/cleaned</code></td><td>POST</td><td>CSV file body</td><td>Normalised CSV or JSON</td></tr>
-          <tr><td><code>/audit/xlsx</code></td><td>POST</td><td>XLSX file upload</td><td>HTML compliance report</td></tr>
-          <tr><td><code>/audit/xlsx/cleaned</code></td><td>POST</td><td>XLSX file upload</td><td>Normalised CSV or JSON</td></tr>
-          <tr><td><code>/audit/json/html</code></td><td>POST</td><td>JSON or XML file body</td><td>HTML compliance report</td></tr>
-          <tr><td><code>/audit/json/cleaned</code></td><td>POST</td><td>JSON or XML file body</td><td>Normalised CSV or JSON</td></tr>
-          <tr><td><code>/audit/ui</code></td><td>GET</td><td>—</td><td>Upload web interface</td></tr>
-          <tr><td><code>/guide</code></td><td>GET</td><td>—</td><td>This user guide</td></tr>
-        </tbody>
-      </table>
-
-      <div class="tip">
-        <strong>Tip:</strong> For the CSV and JSON endpoints, send the file content as the raw request body with <code>Content-Type: text/csv</code> or <code>application/json</code>. For XLSX, use multipart form upload.
-      </div>
     </div>
     <footer>Clarisys Firewall Compliance Platform &bull; User Guide</footer>
   </div>

@@ -124,7 +124,7 @@ CONTROL_STANDARD_MAP = {
     "Data-11": ["Clarisys NFR", "ISO 27001"],
 }
 
-ALLOWED_STANDARDS = {"Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
+ALLOWED_STANDARDS = {"ISO 27001", "CIS v8.1", "PCI-DSS"}
 
 _POLICY_SIGNING_KEY = os.environ.get("POLICY_SIGNING_KEY", "").encode("utf-8")
 _POLICY_WEBHOOK_URLS = [
@@ -292,7 +292,7 @@ app = FastAPI(
         "Submit any source IP/FQDN, destination IP/FQDN, protocol, and port. "
         "Returns an immediate ACCEPTABLE or DENY verdict evaluated only against "
         "the Clarisys security standards framework rather than the existing firewall ruleset. "
-        "Standards: CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1, Clarisys NFRs."
+        "Standards: CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1."
     ),
     version="3.0.0",
     lifespan=_app_lifespan,
@@ -586,10 +586,10 @@ class TrafficRequest(BaseModel):
         description="Contract / DPA reference required for approved external sharing.",
     )
     standards: list[str] = Field(
-        default_factory=lambda: ["Clarisys NFR"],
+        default_factory=lambda: ["ISO 27001", "CIS v8.1", "PCI-DSS"],
         description=(
-            "Standards to evaluate for this request. Clarisys NFR is always enforced; "
-            "include ISO 27001, CIS v8.1, or PCI-DSS to opt into those checks."
+            "Standards to evaluate for this request. "
+            "Choose from ISO 27001, CIS v8.1, or PCI-DSS."
         ),
     )
 
@@ -650,9 +650,6 @@ class TrafficRequest(BaseModel):
             if not normalized:
                 continue
             lookup = {
-                "clarisys": "Clarisys NFR",
-                "clarisys nfr": "Clarisys NFR",
-                "ms nfr": "Clarisys NFR",
                 "iso 27001": "ISO 27001",
                 "cis v8.1": "CIS v8.1",
                 "pci-dss": "PCI-DSS",
@@ -661,10 +658,7 @@ class TrafficRequest(BaseModel):
                 raise ValueError(f"standards must be chosen from {sorted(ALLOWED_STANDARDS)}")
             canonical.append(lookup)
 
-        if "Clarisys NFR" not in canonical:
-            canonical.insert(0, "Clarisys NFR")
-
-        return list(dict.fromkeys(canonical))
+        return list(dict.fromkeys(canonical)) if canonical else ["ISO 27001", "CIS v8.1", "PCI-DSS"]
 
 
 # ── Response schema ────────────────────────────────────────────────────────────
@@ -861,10 +855,10 @@ class IntakeRequest(BaseModel):
         return stripped
 
     standards: list[str] = Field(
-        default_factory=lambda: ["Clarisys NFR"],
+        default_factory=lambda: ["ISO 27001", "CIS v8.1", "PCI-DSS"],
         description=(
-            "Standards to evaluate for this request. Clarisys NFR is always enforced; "
-            "include ISO 27001, CIS v8.1, or PCI-DSS to opt into those checks."
+            "Standards to evaluate for this request. "
+            "Choose from ISO 27001, CIS v8.1, or PCI-DSS."
         ),
     )
 
@@ -879,9 +873,6 @@ class IntakeRequest(BaseModel):
             if not normalized:
                 continue
             lookup = {
-                "clarisys": "Clarisys NFR",
-                "clarisys nfr": "Clarisys NFR",
-                "ms nfr": "Clarisys NFR",
                 "iso 27001": "ISO 27001",
                 "cis v8.1": "CIS v8.1",
                 "pci-dss": "PCI-DSS",
@@ -890,10 +881,7 @@ class IntakeRequest(BaseModel):
                 raise ValueError(f"standards must be chosen from {sorted(ALLOWED_STANDARDS)}")
             canonical.append(lookup)
 
-        if "Clarisys NFR" not in canonical:
-            canonical.insert(0, "Clarisys NFR")
-
-        return list(dict.fromkeys(canonical))
+        return list(dict.fromkeys(canonical)) if canonical else ["ISO 27001", "CIS v8.1", "PCI-DSS"]
 
     @model_validator(mode="after")
     def port_required_for_tcp_udp(self) -> "IntakeRequest":
@@ -1019,7 +1007,7 @@ def _build_standards_input(request: TrafficRequest) -> dict:
     }
 
 
-def _collect_failed_standards(violations: list[dict]) -> list[str]:
+def _collect_failed_standards(violations: list[dict], selected_standards: list[str] | None = None) -> list[str]:
     standards: set[str] = set()
     for violation in violations:
         if not isinstance(violation, dict):
@@ -1031,7 +1019,35 @@ def _collect_failed_standards(violations: list[dict]) -> list[str]:
         if raw_standard and isinstance(raw_standard, str):
             for part in raw_standard.split("/"):
                 standards.add(part.strip().replace("_", " "))
+    if selected_standards:
+        allowed = set(selected_standards)
+        standards = standards & allowed
     return sorted(standards)
+
+
+def _control_matches_standards(control: str | None, selected_standards: list[str] | None) -> bool:
+    """Return True if a control maps to at least one of the selected standards."""
+    if not selected_standards or not control:
+        return True
+    allowed = set(selected_standards)
+    mapped = set(CONTROL_STANDARD_MAP.get(control, []))
+    if mapped:
+        return bool(mapped & allowed)
+    return True  # unknown controls pass through
+
+
+def _filter_violations_by_standards(violations: list[dict], selected_standards: list[str] | None) -> list[dict]:
+    """Keep only violations whose control maps to at least one selected standard."""
+    if not selected_standards:
+        return violations
+    return [v for v in violations if _control_matches_standards(v.get("control") if isinstance(v, dict) else None, selected_standards)]
+
+
+def _filter_controls_by_standards(controls: list[str], selected_standards: list[str] | None) -> list[str]:
+    """Keep only controls that map to at least one selected standard."""
+    if not selected_standards:
+        return controls
+    return sorted(c for c in controls if _control_matches_standards(c, selected_standards))
 
 
 def _canonical_standard_key(standard: str) -> str | None:
@@ -1054,11 +1070,18 @@ def _build_reason(request: TrafficRequest | None, decision: dict) -> str:
         return "Permitted: the proposed request is compliant with the applicable security standards controls."
 
     violations = decision.get("violations", [])
-    failed_standards = _collect_failed_standards(violations)
-    failed_controls = sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")})
+    selected = request.standards if request is not None else None
+    violations = _filter_violations_by_standards(violations, selected)
+    failed_standards = _collect_failed_standards(violations, selected_standards=selected)
+    failed_controls = _filter_controls_by_standards(
+        sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")}),
+        selected,
+    )
 
     standards_text = ", ".join(failed_standards[:4]) if failed_standards else "security standards"
-    controls_text = ", ".join(failed_controls[:3]) if failed_controls else "control violations"
+    mappings_data = _load_compliance_mappings().get("controls", {})
+    ctrl_labels = [mappings_data.get(c, {}).get("title", c) for c in failed_controls[:3]]
+    controls_text = ", ".join(ctrl_labels) if ctrl_labels else "control violations"
     return f"Requires remediation due to {standards_text} failures: {controls_text}."
 
 
@@ -3078,9 +3101,12 @@ def _record_decision_history(
 
 def _build_verdict(request: TrafficRequest, decision: dict) -> StandardsVerdict:
     summary = decision.get("summary", {})
-    violations = decision.get("violations", [])
-    failed_controls = sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")})
-    failed_standards = _collect_failed_standards(violations)
+    violations = _filter_violations_by_standards(decision.get("violations", []), request.standards)
+    failed_controls = _filter_controls_by_standards(
+        sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")}),
+        request.standards,
+    )
+    failed_standards = _collect_failed_standards(violations, selected_standards=request.standards)
     framework_scope = failed_standards or request.standards
     framework_clauses, control_clause_mappings = _resolve_clause_mappings(
         failed_controls,
@@ -3571,9 +3597,12 @@ def _compute_risk_score(overall_risk: str) -> int:
 
 def _build_intake_verdict(intake: IntakeRequest, traffic: TrafficRequest, decision: dict) -> IntakeVerdict:
     summary = decision.get("summary", {})
-    violations = decision.get("violations", [])
-    failed_controls = sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")})
-    failed_standards = _collect_failed_standards(violations)
+    violations = _filter_violations_by_standards(decision.get("violations", []), intake.standards)
+    failed_controls = _filter_controls_by_standards(
+        sorted({v.get("control") for v in violations if isinstance(v, dict) and v.get("control")}),
+        intake.standards,
+    )
+    failed_standards = _collect_failed_standards(violations, selected_standards=intake.standards)
     framework_scope = failed_standards or intake.standards
     framework_clauses, control_clause_mappings = _resolve_clause_mappings(
         failed_controls,
@@ -4932,10 +4961,10 @@ def _parse_fortinet_xlsx_sheet(sheet) -> tuple[list[TrafficRequest], list[AuditI
 def _apply_standards_to_requests(requests: list[TrafficRequest], standards: list[str] | None) -> None:
     """
     Apply selected standards to all traffic requests in place.
-    If standards is None or empty, uses default ["Clarisys NFR"].
+    If standards is None or empty, uses default ["ISO 27001", "CIS v8.1", "PCI-DSS"].
     """
     if not standards:
-        standards = ["Clarisys NFR"]
+        standards = ["ISO 27001", "CIS v8.1", "PCI-DSS"]
     for req in requests:
         req.standards = standards
 
@@ -5135,7 +5164,7 @@ async def audit_csv(
 async def audit_csv_html(
     request: Request,
     file: UploadFile = File(..., description="Firewall rules CSV file (.csv)"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5207,7 +5236,7 @@ async def audit_csv_cleaned(
         default="csv",
         description="Artifact format to return: csv or json.",
     ),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5296,7 +5325,7 @@ async def audit_csv_cleaned(
 async def audit_xlsx(
     request: Request,
     file: UploadFile = File(..., description="Firewall rules workbook (.xlsx)"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5387,7 +5416,7 @@ async def audit_xlsx_cleaned(
         default="csv",
         description="Artifact format to return: csv or json.",
     ),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5471,7 +5500,7 @@ async def audit_xlsx_cleaned(
 async def audit_json_html(
     request: Request,
     file: UploadFile = File(..., description="Juniper SRX policy JSON or XML export"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5559,7 +5588,7 @@ async def audit_json_cleaned(
     file: UploadFile = File(..., description="Juniper SRX policy JSON or XML export"),
     format: str = Query("csv", description="Output format: csv or json"),
     fmt: str | None = Query(None, description="Alias for format"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5670,6 +5699,31 @@ def audit_ui() -> HTMLResponse:
     )
 
 
+@app.get(
+    "/guide",
+    summary="User guide for firewall compliance",
+    response_class=HTMLResponse,
+)
+def user_guide() -> HTMLResponse:
+    template = Path(__file__).parent.parent / "templates" / "user-guide.html"
+    if not template.exists():
+        raise HTTPException(status_code=404, detail="User guide template not found.")
+    return HTMLResponse(
+        template.read_text(encoding="utf-8"),
+        headers={
+            "Content-Security-Policy": (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:; "
+                "connect-src 'self'; "
+                "form-action 'self'; "
+                "frame-ancestors 'none'"
+            )
+        },
+    )
+
+
 def _md_escape(value: object) -> str:
     s = "" if value is None else str(value)
     return s.replace("|", "\\|").replace("\n", " ").strip()
@@ -5733,27 +5787,28 @@ def _markdown_to_html_document(markdown_text: str) -> str:
         "<title>Firewall Ruleset Compliance Report</title>"
         "<style>"
         ":root{\n"
-        "--ms-black:#111111;\n"
-        "--ms-charcoal:#1f1f1f;\n"
-        "--ms-text:#222222;\n"
-        "--ms-muted:#6a6a6a;\n"
-        "--ms-line:#d9d9d9;\n"
-        "--ms-bg:#f7f5f2;\n"
+        "--ms-black:#04342C;\n"
+        "--ms-charcoal:#085041;\n"
+        "--ms-text:#2C2C2A;\n"
+        "--ms-muted:#5F5E5A;\n"
+        "--ms-line:#D3D1C7;\n"
+        "--ms-bg:#E1F5EE;\n"
         "--ms-surface:#ffffff;\n"
-        "--ms-good:#1f6f3f;\n"
+        "--ms-good:#1D9E75;\n"
         "--ms-bad:#b02a2a;\n"
+        "--ms-primary:#0F6E56;\n"
         "}\n"
         "*{margin:0;padding:0;box-sizing:border-box;}\n"
         "body{font-family:\"Helvetica Neue\",Helvetica,Arial,sans-serif;line-height:1.55;color:var(--ms-text);background:var(--ms-bg);min-height:100vh;padding:14px;}\n"
         ".container{max-width:1200px;margin:0 auto;background:var(--ms-surface);border:1px solid var(--ms-line);box-shadow:0 10px 28px rgba(17,17,17,0.08);overflow:hidden;}\n"
-        ".utility-strip{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--ms-black);color:#f4f4f4;padding:9px 28px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}\n"
+        ".utility-strip{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--ms-primary);color:#E1F5EE;padding:9px 28px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}\n"
         ".utility-links{display:flex;gap:18px;flex-wrap:wrap;}\n"
         ".utility-links span{opacity:0.9;}\n"
         ".brand-row{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--ms-line);background:#fff;}\n"
         ".brand{font-family:Georgia,\"Times New Roman\",serif;font-size:1.2rem;letter-spacing:0.16em;color:var(--ms-black);text-transform:uppercase;white-space:nowrap;}\n"
         ".top-nav{display:flex;gap:18px;align-items:center;font-size:0.78rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ms-charcoal);}\n"
         ".top-nav a{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.2s ease;}\n"
-        ".top-nav a:hover{border-bottom-color:var(--ms-black);}\n"
+        ".top-nav a:hover{border-bottom-color:var(--ms-primary);}\n"
         "header{background:#fff;color:var(--ms-charcoal);padding:20px 28px 22px;border-bottom:1px solid var(--ms-line);}\n"
         "header h1{font-family:Georgia,\"Times New Roman\",serif;font-size:2.05rem;font-weight:500;letter-spacing:0.01em;margin-bottom:4px;}\n"
         "header p{color:var(--ms-muted);font-size:0.92rem;}\n"
@@ -5764,21 +5819,21 @@ def _markdown_to_html_document(markdown_text: str) -> str:
         ".status-non-compliant,.status-denied{color:var(--ms-bad);}\n"
         ".status-compliant,.status-acceptable{color:var(--ms-good);}\n"
         ".content{padding:26px 28px 32px;}\n"
-        "h2{font-family:Georgia,\"Times New Roman\",serif;font-size:1.5rem;color:var(--ms-charcoal);margin-top:30px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--ms-black);}\n"
+        "h2{font-family:Georgia,\"Times New Roman\",serif;font-size:1.5rem;color:var(--ms-charcoal);margin-top:30px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--ms-primary);}\n"
         "h2:first-child{margin-top:0;}\n"
-        "h3{font-size:1rem;color:var(--ms-charcoal);margin-top:24px;margin-bottom:12px;padding:10px 12px;background:#f5f5f5;border-left:3px solid var(--ms-black);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}\n"
+        "h3{font-size:1rem;color:var(--ms-charcoal);margin-top:24px;margin-bottom:12px;padding:10px 12px;background:#f5f5f5;border-left:3px solid var(--ms-primary);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}\n"
         ".rag-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-weight:700;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;}\n"
-        ".rag-badge.rag-low{background:#1f6f3f;color:#fff;}\n"
+        ".rag-badge.rag-low{background:#1D9E75;color:#fff;}\n"
         ".rag-badge.rag-medium{background:#e8a500;color:#fff;}\n"
         ".rag-badge.rag-high{background:#b02a2a;color:#fff;}\n"
         ".rag-badge.rag-critical{background:#8b0000;color:#fff;}\n"
         "table{width:100%;border-collapse:collapse;margin:14px 0;border:1px solid var(--ms-line);}\n"
-        "thead{background:var(--ms-black);color:#fff;}\n"
+        "thead{background:var(--ms-primary);color:#fff;}\n"
         "th{padding:10px 12px;text-align:left;font-size:0.76rem;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;}\n"
         "td{padding:10px 12px;border-bottom:1px solid #ececec;vertical-align:top;font-size:0.94rem;}\n"
         "tbody tr:nth-child(even){background:#fcfcfc;}\n"
         ".stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0;}\n"
-        ".stat-box{padding:14px;background:#fff;text-align:center;border:1px solid var(--ms-line);border-top:3px solid #222;}\n"
+        ".stat-box{padding:14px;background:#fff;text-align:center;border:1px solid var(--ms-line);border-top:3px solid var(--ms-primary);}\n"
         ".stat-box.acceptable{border-top-color:var(--ms-good);}\n"
         ".stat-box.denied{border-top-color:var(--ms-bad);}\n"
         ".stat-number{font-size:1.9rem;font-weight:700;color:var(--ms-charcoal);margin:4px 0;}\n"
@@ -5841,7 +5896,7 @@ def _render_markdown_report(
                 selected_standards.append(standard)
     if selected_standards:
         lines.append(f"- **Selected optional standards:** {', '.join(_md_escape(s) for s in selected_standards)}")
-    lines.append("- **Baseline always enforced:** Clarisys NFR")
+    lines.append("- **Evaluated against selected standards only**")
     if kind == "intake":
         lines.append(f"- **Total risk score:** {summary.get('total_risk_score', 0)}")
         lines.append(f"- **Max risk score:** {summary.get('max_risk_score', 0)}")
@@ -5851,11 +5906,22 @@ def _render_markdown_report(
     if failed_controls:
         lines.append("## Failed controls")
         lines.append("")
-        lines.append("| Control | Occurrences |")
-        lines.append("|---|---|")
+        mappings_data = _load_compliance_mappings().get("controls", {})
+        lines.append("| Control | Clause | Occurrences |")
+        lines.append("|---|---|---|")
         breakdown = summary.get("by_failed_control") or {}
         for ctrl in failed_controls:
-            lines.append(f"| {_md_escape(ctrl)} | {breakdown.get(ctrl, '')} |")
+            ctrl_info = mappings_data.get(ctrl, {})
+            title = ctrl_info.get("title", ctrl)
+            # Show clause from selected standard if available
+            clause_str = ""
+            if selected_standards and ctrl_info.get("mappings"):
+                for std in selected_standards:
+                    clauses = ctrl_info["mappings"].get(std, [])
+                    if clauses:
+                        clause_str = ", ".join(str(c) for c in clauses)
+                        break
+            lines.append(f"| {_md_escape(title)} | {_md_escape(clause_str)} | {breakdown.get(ctrl, '')} |")
         lines.append("")
 
     failed_standards = summary.get("by_failed_standard") or {}
@@ -5891,7 +5957,8 @@ def _render_markdown_report(
             lines.append(f"- **Reason:** {_md_escape(item.get('reason', ''))}")
             ctrls = item.get("failed_controls") or []
             if ctrls:
-                lines.append(f"- **Failed controls:** {', '.join(ctrls)}")
+                ctrl_labels = [mappings_data.get(c, {}).get("title", c) for c in ctrls]
+                lines.append(f"- **Failed controls:** {', '.join(ctrl_labels)}")
             stds = item.get("failed_standards") or []
             if stds:
                 lines.append(f"- **Failed standards:** {', '.join(stds)}")
@@ -5901,8 +5968,10 @@ def _render_markdown_report(
                 for v in violations:
                     if not isinstance(v, dict):
                         continue
+                    ctrl_id = v.get("control") or ""
+                    ctrl_label = mappings_data.get(ctrl_id, {}).get("title", ctrl_id)
                     lines.append(
-                        f"  - **{_md_escape(v.get('control'))}** ({_md_escape(v.get('severity'))}) — "
+                        f"  - **{_md_escape(ctrl_label)}** ({_md_escape(v.get('severity'))}) — "
                         f"{_md_escape(v.get('violation'))}"
                     )
                     if v.get("remediation"):
