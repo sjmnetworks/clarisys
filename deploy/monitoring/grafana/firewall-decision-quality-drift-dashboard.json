@@ -310,7 +310,7 @@
         {
           "refId": "A",
           "expr": "increase(firewall_failed_standard_ms_nfr_total[5m])",
-          "legendFormat": "M&S NFR"
+          "legendFormat": "Clarisys NFR"
         },
         {
           "refId": "B",

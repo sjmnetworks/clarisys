@@ -1,5 +1,5 @@
 """
-Rate limiting for the M&S Firewall Policy Compliance API.
+Rate limiting for the Clarisys Firewall Policy Compliance API.
 
 Enforces quotas per caller (authenticated user sub, or IP for unauthenticated)
 and per-endpoint. Uses a thread-safe sliding-window counter backed by a

@@ -1,6 +1,6 @@
-# M&S Board Deck Template
+# Clarisys Board Deck Template
 
-Reusable, single-file HTML slide deck in M&S branding. Designed for board packs, Steerco updates and executive briefings — any topic, not just firewall policy.
+Reusable, single-file HTML slide deck in Clarisys branding. Designed for board packs, Steerco updates and executive briefings — any topic, not just firewall policy.
 
 ## Files
 
@@ -40,7 +40,7 @@ Reusable, single-file HTML slide deck in M&S branding. Designed for board packs,
 
 ## Brand palette
 
-Aligned with the M&S master brand on [marksandspencer.com](https://www.marksandspencer.com/) — monochrome black & white, light-grey surfaces, RAG used only for semantic status.
+Aligned with the Clarisys master brand on [clarisys.com](https://www.clarisys.com/) — monochrome black & white, light-grey surfaces, RAG used only for semantic status.
 
 | Use | Colour |
 |-----|--------|

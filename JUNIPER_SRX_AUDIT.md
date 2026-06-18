@@ -116,7 +116,7 @@ Sample file: `deploy/srx-sample.json` contains 5 test policies across 2 zone pai
 ## Compliance Evaluation
 
 Policies extracted from SRX JSON are evaluated against:
-- **M&S NFR**: Requires specific protocol and port, not `any`
+- **Clarisys NFR**: Requires specific protocol and port, not `any`
 - **CIS v8.1**: Requires logging and least-privilege design
 - **ISO 27001**: Requires approval and data classification
 - **PCI-DSS**: Requires encryption for payment data paths

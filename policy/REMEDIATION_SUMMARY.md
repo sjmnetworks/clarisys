@@ -1,6 +1,6 @@
 # Quick Reference: Rules Requiring Action — v2 (2026-05-15)
 
-> **v2 update:** Added M&S NFR standards (IAM-2, IAM-8, Data-10, Cloud-08). Rule 24 escalated to REMOVE. Rules 28, 29, 30 escalated to RESTRICT. Rules 10 and 20 newly flagged. See COMPLIANCE_AUDIT.md for full detail.
+> **v2 update:** Added Clarisys NFR standards (IAM-2, IAM-8, Data-10, Cloud-08). Rule 24 escalated to REMOVE. Rules 28, 29, 30 escalated to RESTRICT. Rules 10 and 20 newly flagged. See COMPLIANCE_AUDIT.md for full detail.
 
 ## Summary
 - **Total Rules:** 34
@@ -20,7 +20,7 @@
 | **24** | VLAN116 to DPDIA | PCI-DSS + Data-10 + ANY dest + ALL services | PCI-DSS-4.1, Data-10, CIS-12.2, CIS-4.8 | **ESCALATED from REMEDIATE** |
 | **33** | Catch all to Zscaler | No logging + ALL services + ANY destination | CIS-8.2, IAM-8, CIS-4.8, Data-10 | No change |
 
-> **Rule 24:** Remove or restrict to `HTTPS` (443) with explicit payment processor IPs only. Coordinate with POS/payment team. This is the highest business risk — PCI-DSS + M&S NFR Data-10 dual failure.
+> **Rule 24:** Remove or restrict to `HTTPS` (443) with explicit payment processor IPs only. Coordinate with POS/payment team. This is the highest business risk — PCI-DSS + Clarisys NFR Data-10 dual failure.
 
 ---
 
@@ -125,4 +125,4 @@
 
 **Overall Risk:** Low — restrictions don't block legitimate traffic  
 **Overall Effort:** 3–4 weeks  
-**Compliance ROI:** 53% → 100% alignment across CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1, and M&S NFRs
+**Compliance ROI:** 53% → 100% alignment across CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1, and Clarisys NFRs

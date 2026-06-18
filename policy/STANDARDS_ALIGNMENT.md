@@ -2,7 +2,7 @@
 
 ## What Has Been Built
 
-Your M&S store firewall policy system now includes:
+Your Clarisys store firewall policy system now includes:
 
 ### Phase 1: Core Firewall Policy ✅
 - **34 firewall rules** covering all store operations
@@ -229,7 +229,7 @@ policy/
 ### ISO 27001 (Information Security)
 **When:** All systems (baseline)
 **Requires:** Encryption for sensitive data, audit logging, access control
-**Your Systems:** All M&S networks
+**Your Systems:** All Clarisys networks
 
 ### NIST Cybersecurity Framework
 **When:** All systems (foundational)

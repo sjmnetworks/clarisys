@@ -891,7 +891,7 @@ def test_slack_compliant_decision_omits_failure_reason_and_remediation(
             "endpoint": "/evaluate",
             "decision_id": "dec-2",
             "details": {
-                "reason": "Permitted: the proposed request is compliant with M&S NFR controls.",
+                "reason": "Permitted: the proposed request is compliant with Clarisys NFR controls.",
                 "remediations": ["Do something"],
             },
         }

@@ -1,5 +1,5 @@
 """
-JWT bearer-token authentication for the M&S Firewall Policy Compliance API.
+JWT bearer-token authentication for the Clarisys Firewall Policy Compliance API.
 
 Designed for Microsoft Entra ID (Azure AD) but will work with any OIDC-compliant
 issuer that publishes a JWKS endpoint.

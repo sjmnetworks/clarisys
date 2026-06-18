@@ -75,8 +75,8 @@ non_compliant = [r for r in results if r['rec'] != 'COMPLIANT']
 compliant     = [r for r in results if r['rec'] == 'COMPLIANT']
 
 print("=" * 110)
-print("M&S STORE FIREWALL COMPLIANCE AUDIT — 2026-05-15")
-print("Standards: CIS v8.1 IG3 + ISO 27001 + PCI-DSS 4.1 + M&S NFRs (IAM, Data, Cloud)")
+print("Clarisys STORE FIREWALL COMPLIANCE AUDIT — 2026-05-15")
+print("Standards: CIS v8.1 IG3 + ISO 27001 + PCI-DSS 4.1 + Clarisys NFRs (IAM, Data, Cloud)")
 print("=" * 110)
 
 print(f"\n{'─'*110}")

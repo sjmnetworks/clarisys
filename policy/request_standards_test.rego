@@ -99,7 +99,7 @@ test_udp_443_is_not_treated_as_encrypted if {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_deny_no_log_with_ms_nfr_only_does_not_trigger_cis_13_6 if {
-    # M&S NFR does not mandate dropped-traffic logging; CIS_13.6 must stay silent.
+    # Clarisys NFR does not mandate dropped-traffic logging; CIS_13.6 must stay silent.
     input_data := {
         "source": "10.10.1.1",
         "destination": "10.10.2.1",
@@ -109,7 +109,7 @@ test_deny_no_log_with_ms_nfr_only_does_not_trigger_cis_13_6 if {
         "action": "deny",
         "source_interface": "app-src",
         "destination_interface": "app-dst",
-        "standards": ["M&S NFR"],
+        "standards": ["Clarisys NFR"],
     }
 
     result := request_standards.decision with input as input_data
@@ -127,7 +127,7 @@ test_deny_no_log_with_iso27001_triggers_cis_13_6 if {
         "action": "deny",
         "source_interface": "app-src",
         "destination_interface": "app-dst",
-        "standards": ["M&S NFR", "ISO 27001"],
+        "standards": ["Clarisys NFR", "ISO 27001"],
     }
 
     result := request_standards.decision with input as input_data
@@ -148,7 +148,7 @@ test_deny_no_log_with_pci_dss_only_does_not_trigger_cis_13_6 if {
         "action": "deny",
         "source_interface": "app-src",
         "destination_interface": "app-dst",
-        "standards": ["M&S NFR", "PCI-DSS"],
+        "standards": ["Clarisys NFR", "PCI-DSS"],
     }
 
     result := request_standards.decision with input as input_data

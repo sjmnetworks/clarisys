@@ -1,7 +1,7 @@
 package policy.nfr_compliance
 
 # ──────────────────────────────────────────────────────────────────────────────
-# M&S SECURITY NFR COMPLIANCE POLICY
+# Clarisys SECURITY NFR COMPLIANCE POLICY
 # Validates firewall rules, data flows, and cloud resources against:
 #   - Identity & Access Management (IAM-1 through IAM-9)
 #   - Data Security (Encryption, Classification, Sharing)

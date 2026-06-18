@@ -1,8 +1,8 @@
-# OPA Policy Module - M&S Security Standards Evaluation API
+# OPA Policy Module - Clarisys Security Standards Evaluation API
 
 FastAPI service backed by Open Policy Agent (OPA) for evaluating proposed firewall and network rules against:
 
-- M&S NFR
+- Clarisys NFR
 - ISO 27001
 - CIS Controls v8.1
 - PCI-DSS
@@ -135,7 +135,7 @@ Uses CMDB/logical fields such as `app_id`, `source_name`, `destination_name`, `d
 
 ## Firewall Compliance Audit
 
-The audit upload endpoints evaluate firewall policy exports (Fortinet, Palo Alto, or standard schema) against M&S security standards and generate professional HTML compliance reports with risk status indicators.
+The audit upload endpoints evaluate firewall policy exports (Fortinet, Palo Alto, or standard schema) against Clarisys security standards and generate professional HTML compliance reports with risk status indicators.
 
 ### Using the Web Upload UI
 
@@ -149,8 +149,8 @@ The page is intentionally public so users can open the form directly in a browse
 
 Features:
 - Drag-and-drop or file picker for XLSX, CSV, JSON, and XML firewall policy exports
-- Real-time compliance evaluation against M&S security standards
-- HTML report generation with M&S professional branding
+- Real-time compliance evaluation against Clarisys security standards
+- HTML report generation with Clarisys professional branding
 - Direct Palo Alto security-rule CSV support (native export headers)
 - Direct Juniper SRX JSON/XML policy export support
 - **RAG Status Badges**: Red/Amber/Green visual risk indicators for each evaluated rule

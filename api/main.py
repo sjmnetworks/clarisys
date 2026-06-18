@@ -1,5 +1,5 @@
 """
-M&S Store Firewall Policy API
+Clarisys Store Firewall Policy API
 Evaluates proposed requests against security standards only.
 Accepts any source/destination IP or FQDN and returns a standards-based verdict.
 """
@@ -114,17 +114,17 @@ _EXTERNAL_IP_RANGES = (
 )
 
 CONTROL_STANDARD_MAP = {
-    "Enc-Transit": ["ISO 27001", "CIS v8.1", "M&S NFR", "PCI-DSS"],
-    "CIS_4.8": ["CIS v8.1", "ISO 27001", "M&S NFR"],
-    "Cloud-08 / CIS_12.2": ["CIS v8.1", "ISO 27001", "M&S NFR"],
-    "IAM-8 / Cloud-09 / CIS_8.2": ["ISO 27001", "CIS v8.1", "M&S NFR"],
+    "Enc-Transit": ["ISO 27001", "CIS v8.1", "Clarisys NFR", "PCI-DSS"],
+    "CIS_4.8": ["CIS v8.1", "ISO 27001", "Clarisys NFR"],
+    "Cloud-08 / CIS_12.2": ["CIS v8.1", "ISO 27001", "Clarisys NFR"],
+    "IAM-8 / Cloud-09 / CIS_8.2": ["ISO 27001", "CIS v8.1", "Clarisys NFR"],
     "CIS_13.6": ["CIS v8.1", "ISO 27001"],
-    "Data-01": ["M&S NFR", "ISO 27001"],
-    "Data-10": ["M&S NFR", "ISO 27001"],
-    "Data-11": ["M&S NFR", "ISO 27001"],
+    "Data-01": ["Clarisys NFR", "ISO 27001"],
+    "Data-10": ["Clarisys NFR", "ISO 27001"],
+    "Data-11": ["Clarisys NFR", "ISO 27001"],
 }
 
-ALLOWED_STANDARDS = {"M&S NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
+ALLOWED_STANDARDS = {"Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
 
 _POLICY_SIGNING_KEY = os.environ.get("POLICY_SIGNING_KEY", "").encode("utf-8")
 _POLICY_WEBHOOK_URLS = [
@@ -287,12 +287,12 @@ async def _app_lifespan(_: FastAPI):
 
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="M&S Store Firewall Policy API",
+    title="Clarisys Store Firewall Policy API",
     description=(
         "Submit any source IP/FQDN, destination IP/FQDN, protocol, and port. "
         "Returns an immediate ACCEPTABLE or DENY verdict evaluated only against "
-        "the M&S security standards framework rather than the existing firewall ruleset. "
-        "Standards: CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1, M&S NFRs."
+        "the Clarisys security standards framework rather than the existing firewall ruleset. "
+        "Standards: CIS v8.1 IG3, ISO 27001, PCI-DSS 4.1, Clarisys NFRs."
     ),
     version="3.0.0",
     lifespan=_app_lifespan,
@@ -586,9 +586,9 @@ class TrafficRequest(BaseModel):
         description="Contract / DPA reference required for approved external sharing.",
     )
     standards: list[str] = Field(
-        default_factory=lambda: ["M&S NFR"],
+        default_factory=lambda: ["Clarisys NFR"],
         description=(
-            "Standards to evaluate for this request. M&S NFR is always enforced; "
+            "Standards to evaluate for this request. Clarisys NFR is always enforced; "
             "include ISO 27001, CIS v8.1, or PCI-DSS to opt into those checks."
         ),
     )
@@ -650,9 +650,9 @@ class TrafficRequest(BaseModel):
             if not normalized:
                 continue
             lookup = {
-                "m&s": "M&S NFR",
-                "m&s nfr": "M&S NFR",
-                "ms nfr": "M&S NFR",
+                "clarisys": "Clarisys NFR",
+                "clarisys nfr": "Clarisys NFR",
+                "ms nfr": "Clarisys NFR",
                 "iso 27001": "ISO 27001",
                 "cis v8.1": "CIS v8.1",
                 "pci-dss": "PCI-DSS",
@@ -661,8 +661,8 @@ class TrafficRequest(BaseModel):
                 raise ValueError(f"standards must be chosen from {sorted(ALLOWED_STANDARDS)}")
             canonical.append(lookup)
 
-        if "M&S NFR" not in canonical:
-            canonical.insert(0, "M&S NFR")
+        if "Clarisys NFR" not in canonical:
+            canonical.insert(0, "Clarisys NFR")
 
         return list(dict.fromkeys(canonical))
 
@@ -861,9 +861,9 @@ class IntakeRequest(BaseModel):
         return stripped
 
     standards: list[str] = Field(
-        default_factory=lambda: ["M&S NFR"],
+        default_factory=lambda: ["Clarisys NFR"],
         description=(
-            "Standards to evaluate for this request. M&S NFR is always enforced; "
+            "Standards to evaluate for this request. Clarisys NFR is always enforced; "
             "include ISO 27001, CIS v8.1, or PCI-DSS to opt into those checks."
         ),
     )
@@ -879,9 +879,9 @@ class IntakeRequest(BaseModel):
             if not normalized:
                 continue
             lookup = {
-                "m&s": "M&S NFR",
-                "m&s nfr": "M&S NFR",
-                "ms nfr": "M&S NFR",
+                "clarisys": "Clarisys NFR",
+                "clarisys nfr": "Clarisys NFR",
+                "ms nfr": "Clarisys NFR",
                 "iso 27001": "ISO 27001",
                 "cis v8.1": "CIS v8.1",
                 "pci-dss": "PCI-DSS",
@@ -890,8 +890,8 @@ class IntakeRequest(BaseModel):
                 raise ValueError(f"standards must be chosen from {sorted(ALLOWED_STANDARDS)}")
             canonical.append(lookup)
 
-        if "M&S NFR" not in canonical:
-            canonical.insert(0, "M&S NFR")
+        if "Clarisys NFR" not in canonical:
+            canonical.insert(0, "Clarisys NFR")
 
         return list(dict.fromkeys(canonical))
 
@@ -1036,7 +1036,7 @@ def _collect_failed_standards(violations: list[dict]) -> list[str]:
 
 def _canonical_standard_key(standard: str) -> str | None:
     lookup = {
-        "m&s nfr": "failed_standard_ms_nfr_total",
+        "clarisys nfr": "failed_standard_ms_nfr_total",
         "ms nfr": "failed_standard_ms_nfr_total",
         "iso 27001": "failed_standard_iso_27001_total",
         "cis v8.1": "failed_standard_cis_v81_total",
@@ -1635,7 +1635,7 @@ def _bootstrap_slo_state_from_history() -> bool:
         failed_standards = details.get("failed_standards", []) if isinstance(details, dict) else []
         if isinstance(failed_standards, list):
             for standard in failed_standards:
-                if standard == "M&S NFR":
+                if standard == "Clarisys NFR":
                     counters["failed_standard_ms_nfr_total"] += 1
                 elif standard == "ISO 27001":
                     counters["failed_standard_iso_27001_total"] += 1
@@ -2476,7 +2476,7 @@ def _prometheus_render_slo(snapshot: dict) -> str:
         "# HELP firewall_latency_p95_ms API latency p95 in milliseconds.",
         "# TYPE firewall_latency_p95_ms gauge",
         f"firewall_latency_p95_ms {snapshot.get('latency_p95_ms', 0)}",
-        "# HELP firewall_failed_standard_ms_nfr_total Total denied decisions failing M&S NFR.",
+        "# HELP firewall_failed_standard_ms_nfr_total Total denied decisions failing Clarisys NFR.",
         "# TYPE firewall_failed_standard_ms_nfr_total counter",
         f"firewall_failed_standard_ms_nfr_total {snapshot.get('failed_standard_ms_nfr_total', 0)}",
         "# HELP firewall_failed_standard_iso_27001_total Total denied decisions failing ISO 27001.",
@@ -3610,7 +3610,7 @@ def _build_intake_verdict(intake: IntakeRequest, traffic: TrafficRequest, decisi
     summary="Evaluate a logical intake request",
     description=(
         "Submit a structured intake request using CMDB/logical identifiers. "
-        "The request is evaluated against the M&S security standards and returns a verdict. "
+        "The request is evaluated against the Clarisys security standards and returns a verdict. "
         "Risk is derived from the resulting standards classification only."
     ),
 )
@@ -3735,7 +3735,7 @@ def _compute_evaluate_intake_bulk(payload: IntakeBulkRequest) -> IntakeBulkRespo
     summary="Evaluate many logical intake requests in one call",
     description=(
         "Submit `{\"requests\": [...]}` containing 1–500 logical intake requests. "
-        "Each item is evaluated against the M&S security standards and returned with "
+        "Each item is evaluated against the Clarisys security standards and returned with "
         "its own verdict, standards-derived numeric risk score, and an aggregated summary across the batch."
     ),
 )
@@ -4932,10 +4932,10 @@ def _parse_fortinet_xlsx_sheet(sheet) -> tuple[list[TrafficRequest], list[AuditI
 def _apply_standards_to_requests(requests: list[TrafficRequest], standards: list[str] | None) -> None:
     """
     Apply selected standards to all traffic requests in place.
-    If standards is None or empty, uses default ["M&S NFR"].
+    If standards is None or empty, uses default ["Clarisys NFR"].
     """
     if not standards:
-        standards = ["M&S NFR"]
+        standards = ["Clarisys NFR"]
     for req in requests:
         req.standards = standards
 
@@ -5135,7 +5135,7 @@ async def audit_csv(
 async def audit_csv_html(
     request: Request,
     file: UploadFile = File(..., description="Firewall rules CSV file (.csv)"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5207,7 +5207,7 @@ async def audit_csv_cleaned(
         default="csv",
         description="Artifact format to return: csv or json.",
     ),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5296,7 +5296,7 @@ async def audit_csv_cleaned(
 async def audit_xlsx(
     request: Request,
     file: UploadFile = File(..., description="Firewall rules workbook (.xlsx)"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5387,7 +5387,7 @@ async def audit_xlsx_cleaned(
         default="csv",
         description="Artifact format to return: csv or json.",
     ),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5471,7 +5471,7 @@ async def audit_xlsx_cleaned(
 async def audit_json_html(
     request: Request,
     file: UploadFile = File(..., description="Juniper SRX policy JSON or XML export"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5559,7 +5559,7 @@ async def audit_json_cleaned(
     file: UploadFile = File(..., description="Juniper SRX policy JSON or XML export"),
     format: str = Query("csv", description="Output format: csv or json"),
     fmt: str | None = Query(None, description="Alias for format"),
-    standards: list[str] = Query(None, description="Compliance standards to evaluate (M&S NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
+    standards: list[str] = Query(None, description="Compliance standards to evaluate (Clarisys NFR, ISO 27001, CIS v8.1, PCI-DSS)"),
     caller: CallerIdentity = Depends(require_scope("firewall.audit")),
 ) -> Response:
     request.state.caller_id = caller.sub
@@ -5712,7 +5712,7 @@ def _add_rag_badges_to_html(html_content: str) -> str:
 
 
 def _markdown_to_html_document(markdown_text: str) -> str:
-    """Convert markdown report text to a styled M&S-branded HTML document."""
+    """Convert markdown report text to a styled Clarisys-branded HTML document."""
     body_html: str
     try:
         import markdown  # type: ignore
@@ -5791,14 +5791,14 @@ def _markdown_to_html_document(markdown_text: str) -> str:
         "</head>"
         "<body>"
         "<div class=\"container\">"
-        "<div class=\"utility-strip\"><div>Marks and Spencer</div></div>"
-        "<div class=\"brand-row\"><div class=\"brand\">M&S</div><nav class=\"top-nav\" aria-label=\"Report Navigation\"><a href=\"#summary\">Summary</a></nav></div>"
-        "<header><h1>Firewall Ruleset Compliance Report</h1><p>Compliance audit aligned to M&S security standards framework.</p></header>"
+        "<div class=\"utility-strip\"><div>Clarisys</div></div>"
+        "<div class=\"brand-row\"><div class=\"brand\">Clarisys</div><nav class=\"top-nav\" aria-label=\"Report Navigation\"><a href=\"#summary\">Summary</a></nav></div>"
+        "<header><h1>Firewall Ruleset Compliance Report</h1><p>Compliance audit aligned to Clarisys security standards framework.</p></header>"
         "<div class=\"metadata\" id=\"summary\"></div>"
         "<div class=\"content\">"
         f"{_add_rag_badges_to_html(body_html)}"
         "</div>"
-        "<footer>Firewall Compliance Report &bullet; M&S Security Standards Framework &bullet; Automated Audit</footer>"
+        "<footer>Firewall Compliance Report &bullet; Clarisys Security Standards Framework &bullet; Automated Audit</footer>"
         "</div>"
         "</body>"
         "</html>"
@@ -5841,7 +5841,7 @@ def _render_markdown_report(
                 selected_standards.append(standard)
     if selected_standards:
         lines.append(f"- **Selected optional standards:** {', '.join(_md_escape(s) for s in selected_standards)}")
-    lines.append("- **Baseline always enforced:** M&S NFR")
+    lines.append("- **Baseline always enforced:** Clarisys NFR")
     if kind == "intake":
         lines.append(f"- **Total risk score:** {summary.get('total_risk_score', 0)}")
         lines.append(f"- **Max risk score:** {summary.get('max_risk_score', 0)}")

@@ -1178,8 +1178,8 @@
       "cidrs": [],
       "ip_ranges": [],
       "fqdns": [
-        "api2.identity.marksandspencer.app.edgekey.net",
-        "api.identity.marksandspencer.app",
+        "api2.identity.clarisys.app.edgekey.net",
+        "api.identity.clarisys.app",
         "e229563.dscx.akamaiedge.net"
       ],
       "members": []
@@ -1188,10 +1188,10 @@
       "cidrs": [],
       "ip_ranges": [],
       "fqdns": [
-        "api-preprod.marksandspencer.com",
+        "api-preprod.clarisys.com",
         "labelling-api.cybakeonline.co.uk",
         "mns-01.dn.apigee.net",
-        "*.api.marksandspencer.com"
+        "*.api.clarisys.com"
       ],
       "members": []
     },
@@ -1281,10 +1281,10 @@
       "ip_ranges": [],
       "fqdns": [
         "2-01-49b5-08ba.cdx.cedexis.net",
-        "assets.digitalcontent.marksandspencer.app.multicdn.cloudinary.com",
-        "prod.marksandspencer.app.edgekey.net",
-        "digital-collections.marksandspencer.app",
-        "digital-collections-innovation.marksandspencer.app"
+        "assets.digitalcontent.clarisys.app.multicdn.cloudinary.com",
+        "prod.clarisys.app.edgekey.net",
+        "digital-collections.clarisys.app",
+        "digital-collections-innovation.clarisys.app"
       ],
       "members": []
     },
@@ -1359,14 +1359,14 @@
       "cidrs": [],
       "ip_ranges": [],
       "fqdns": [
-        "api.marksandspencer.com",
-        "assist.store.marksandspencer.com",
+        "api.clarisys.com",
+        "assist.store.clarisys.com",
         "boss-api.rtl.apps.mnscorp.net",
         "cssm-lcsapi-prod.rtl.apps.mnscorp.net",
         "product-service.ies.apps.mnscorp.net",
         "reassociation-service.rtl.apps.mnscorp.net",
         "rfid-backstage.rtl.apps.mnscorp.net",
-        "assets.digitalcontent.marksandspencer.app"
+        "assets.digitalcontent.clarisys.app"
       ],
       "members": []
     },
@@ -1434,11 +1434,11 @@
         "fonts.gstatic.com",
         "js-agent.newrelic.com",
         "learn.highfieldvault.com",
-        "learning-content.marksandspencer.com",
-        "learning.marksandspencer.com",
+        "learning-content.clarisys.com",
+        "learning.clarisys.com",
         "mandslearning.com",
         "saas.learninglocker.net",
-        "uk-marksandspencer-1-learning.venue.learningpool.com",
+        "uk-clarisys-1-learning.venue.learningpool.com",
         "www.cameratag.com",
         "www.mandslearning.com"
       ],
@@ -1486,7 +1486,7 @@
       "cidrs": [],
       "ip_ranges": [],
       "fqdns": [
-        "sppd.marksandspencer.app"
+        "sppd.clarisys.app"
       ],
       "members": []
     },
@@ -1502,7 +1502,7 @@
       "cidrs": [],
       "ip_ranges": [],
       "fqdns": [
-        "assist.store.marksandspencer.com",
+        "assist.store.clarisys.com",
         "cssm-lcsapi-prod.rtl.apps.mnscorp.net",
         "mcm.services.ingenico.com",
         "mns-oa-pr1.jdadelivers.com"
@@ -1521,9 +1521,9 @@
         "prod.mands.com.edgekey.net",
         "prod1-orgadmin.dotcom.apps.mnscorp.net",
         "prod2-orgadmin.dotcom.apps.mnscorp.net",
-        "static.marksandspencer.com",
-        "store.marksandspencer.com",
-        "experience.marksandspencer.app"
+        "static.clarisys.com",
+        "store.clarisys.com",
+        "experience.clarisys.app"
       ],
       "members": []
     },

@@ -1,6 +1,6 @@
 {
   "frameworks": [
-    "M&S NFR",
+    "Clarisys NFR",
     "ISO 27001",
     "CIS v8.1",
     "PCI-DSS"
@@ -10,7 +10,7 @@
       "title": "Encryption in transit for sensitive or payment traffic",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-ENC-001"],
+        "Clarisys NFR": ["NFR-ENC-001"],
         "ISO 27001": ["A.8.24"],
         "CIS v8.1": ["3.10"],
         "PCI-DSS": ["4.2.1"]
@@ -20,7 +20,7 @@
       "title": "Avoid overly permissive any-protocol access",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-NET-004"],
+        "Clarisys NFR": ["NFR-NET-004"],
         "ISO 27001": ["A.8.20"],
         "CIS v8.1": ["4.8"]
       }
@@ -29,7 +29,7 @@
       "title": "Network segmentation and secure architecture",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-NET-002"],
+        "Clarisys NFR": ["NFR-NET-002"],
         "ISO 27001": ["A.8.20"],
         "CIS v8.1": ["12.2"]
       }
@@ -38,7 +38,7 @@
       "title": "Audit logging for access and rule usage",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-LOG-001"],
+        "Clarisys NFR": ["NFR-LOG-001"],
         "ISO 27001": ["A.8.15", "A.8.16"],
         "CIS v8.1": ["8.2"],
         "PCI-DSS": ["10.2"]
@@ -56,7 +56,7 @@
       "title": "Sensitive data handling baseline",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-DATA-001"],
+        "Clarisys NFR": ["NFR-DATA-001"],
         "ISO 27001": ["A.5.12"]
       }
     },
@@ -64,7 +64,7 @@
       "title": "Contractual governance for external data sharing",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-DATA-010"],
+        "Clarisys NFR": ["NFR-DATA-010"],
         "ISO 27001": ["A.5.14"]
       }
     },
@@ -72,7 +72,7 @@
       "title": "Data transfer and sharing safeguards",
       "status": "implemented",
       "mappings": {
-        "M&S NFR": ["NFR-DATA-011"],
+        "Clarisys NFR": ["NFR-DATA-011"],
         "ISO 27001": ["A.5.14"]
       }
     }

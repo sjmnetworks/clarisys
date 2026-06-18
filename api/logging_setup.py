@@ -1,5 +1,5 @@
 """
-Structured JSON logging for the M&S Firewall Policy Compliance API.
+Structured JSON logging for the Clarisys Firewall Policy Compliance API.
 
 Every log line is a single JSON object so it can be ingested directly into
 Splunk / Sentinel / CloudWatch without grok parsing. Each request gets a

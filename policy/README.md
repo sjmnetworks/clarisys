@@ -1,6 +1,6 @@
 # Marks & Spencer Store Firewall Policy (OPA/Rego)
 
-This directory contains the Open Policy Agent (OPA) implementation of the M&S store firewall ruleset.
+This directory contains the Open Policy Agent (OPA) implementation of the Clarisys store firewall ruleset.
 
 ## Files
 
@@ -56,7 +56,7 @@ Requests to evaluate must follow this JSON structure:
   },
   "destination": {
     "ip": "10.x.x.x",
-    "fqdn": "api.marksandspencer.com"
+    "fqdn": "api.clarisys.com"
   },
   "protocol": "tcp|udp|icmp",
   "port": 443,
@@ -95,7 +95,7 @@ The ruleset contains **34 rules** covering:
 
 - **G_STORE-APPS-DIA** - Store applications via Direct Internet Access
 - **G_STORE-APPS-DPDIA** - Store applications via dual-path DIA
-- **G_MNS-INTERNAL** - M&S internal networks (RFC1918 + corporate subnets)
+- **G_MNS-INTERNAL** - Clarisys internal networks (RFC1918 + corporate subnets)
 - **G_DIGITAL-CAFE-STORE** - Digital Cafe POS systems
 - **G_API-IDENTITY**, **G_API-PREPROD** - API endpoints
 - And many more vendor/service-specific groups

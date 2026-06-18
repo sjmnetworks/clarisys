@@ -1,6 +1,6 @@
 # Firewall Policy Compliance Audit Report
 **Date:** 2026-05-15 (Re-audit v2 — NFR standards added)  
-**Standards:** CIS Controls v8.1 (IG3), ISO 27001, NIST CSF, PCI-DSS v3.2.1, **M&S Security NFRs (IAM, Data, Cloud)**  
+**Standards:** CIS Controls v8.1 (IG3), ISO 27001, NIST CSF, PCI-DSS v3.2.1, **Clarisys Security NFRs (IAM, Data, Cloud)**  
 **Total Rules Audited:** 34
 
 ---
@@ -10,14 +10,14 @@
 | Version | Date | Change |
 |---------|------|--------|
 | v1 | 2026-05-15 | Initial audit — CIS v8.1, ISO 27001, NIST CSF, PCI-DSS |
-| **v2** | **2026-05-15** | **Re-audit — Added M&S NFR standards: IAM-2 (Least Privilege), IAM-8 (Identity Logging), Data-10 (Data Sharing), Cloud-08 (Network Isolation)** |
-| **v3** | **2026-06-16** | **HTML Report Generation with RAG Status Badges — Professional M&S-branded compliance reports with color-coded risk indicators** |
+| **v2** | **2026-05-15** | **Re-audit — Added Clarisys NFR standards: IAM-2 (Least Privilege), IAM-8 (Identity Logging), Data-10 (Data Sharing), Cloud-08 (Network Isolation)** |
+| **v3** | **2026-06-16** | **HTML Report Generation with RAG Status Badges — Professional Clarisys-branded compliance reports with color-coded risk indicators** |
 
 ---
 
 ## HTML Report with RAG Status Indicators
 
-Reports are now generated as professional M&S-branded HTML documents with **Red/Amber/Green (RAG) status badges** for each evaluated rule:
+Reports are now generated as professional Clarisys-branded HTML documents with **Red/Amber/Green (RAG) status badges** for each evaluated rule:
 
 | Badge | Risk Level | Color | Meaning |
 |-------|-----------|-------|---------|
@@ -28,7 +28,7 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 
 **Features:**
 - Download-friendly HTML format with complete audit trail
-- M&S color scheme and typography
+- Clarisys color scheme and typography
 - Metadata grid showing audit timestamp, schema version, and overall compliance status
 - Violation details with control mapping and remediation context
 - Responsive design for viewing on desktop or mobile
@@ -52,14 +52,14 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 | **REMEDIATE** | 12 | **8** | ▼ -4 |
 | **Critical Violations** | 2 | **3** | ▲ +1 |
 
-> **What changed?** The M&S NFR Data-10 (Data Sharing Controls) flagged external-bound rules using ALL services as violations. IAM-2 (Least Privilege) reinforced the CIS-4.8 findings. Cloud-08 (Network Isolation) added violations for rules with ANY destination. Rule 24 escalated from REMEDIATE to REMOVE-or-RESTRICT due to accumulated PCI-DSS + Data-10 violations.
+> **What changed?** The Clarisys NFR Data-10 (Data Sharing Controls) flagged external-bound rules using ALL services as violations. IAM-2 (Least Privilege) reinforced the CIS-4.8 findings. Cloud-08 (Network Isolation) added violations for rules with ANY destination. Rule 24 escalated from REMEDIATE to REMOVE-or-RESTRICT due to accumulated PCI-DSS + Data-10 violations.
 
 ---
 
 ## Critical Findings (Immediate Action Required)
 
 ### 🔴 CIS v8.1 Control 8.2 / 8.5 + IAM-8 — Logging Requirement Violations
-**Violation:** Rules without any logging enabled — violates IG3 mandatory requirement that **all traffic must be logged**, and M&S NFR IAM-8 (Identity Logging, 180-day retention minimum).
+**Violation:** Rules without any logging enabled — violates IG3 mandatory requirement that **all traffic must be logged**, and Clarisys NFR IAM-8 (Identity Logging, 180-day retention minimum).
 
 | Rule # | Name | Action | Current Log | Recommendation |
 |--------|------|--------|-------------|-----------------|
@@ -67,16 +67,16 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 | **33** | Catch all to Zscaler | accept | **no_log** | 🔴 REMOVE — catch-all with no audit trail |
 
 **Impact:** 
-- M&S cannot audit internal VLAN-to-VLAN traffic (Rule 1)
+- Clarisys cannot audit internal VLAN-to-VLAN traffic (Rule 1)
 - Catch-all proxy traffic not being logged (Rule 33)
-- **Non-compliant with CIS IG3, ISO 27001 A.12.4, NIST CSF DE.AE-3, M&S NFR IAM-8**
+- **Non-compliant with CIS IG3, ISO 27001 A.12.4, NIST CSF DE.AE-3, Clarisys NFR IAM-8**
 
 **Action:** Remove both rules. Specific rules (2–9) already provide scoped coverage.
 
 ---
 
 ### 🔴 PCI-DSS 4.1 + Data-10 (NEW v2) — Payment Zone Violation
-**Violation:** Rule 24 (VLAN116 → DPDIA) uses ALL services from the POS/payment VLAN with an ANY destination. Combined PCI-DSS 4.1 and M&S NFR Data-10 (Data Sharing Controls require minimal scope + TLS 1.2+) make this a multi-standard critical failure.
+**Violation:** Rule 24 (VLAN116 → DPDIA) uses ALL services from the POS/payment VLAN with an ANY destination. Combined PCI-DSS 4.1 and Clarisys NFR Data-10 (Data Sharing Controls require minimal scope + TLS 1.2+) make this a multi-standard critical failure.
 
 | Rule # | Name | Action | Services | Destination | Violations |
 |--------|------|--------|----------|-------------|------------|
@@ -87,7 +87,7 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 ---
 
 ## CIS v8.1 Control 4.8 / IAM-2 / Data-10 — Overly Permissive Services
-**Violation:** Rules permit **ANY protocol/port (ALL services)** without restricting to minimum required ports. M&S NFR IAM-2 (Least Privilege RBAC) and Data-10 (Data Sharing Controls: minimal scope, TLS 1.2+) add further requirements, particularly for externally-bound rules.
+**Violation:** Rules permit **ANY protocol/port (ALL services)** without restricting to minimum required ports. Clarisys NFR IAM-2 (Least Privilege RBAC) and Data-10 (Data Sharing Controls: minimal scope, TLS 1.2+) add further requirements, particularly for externally-bound rules.
 
 ### Rules Requiring Action — v2 Consolidated Table
 
@@ -110,12 +110,12 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 | **30** | CDNs via DIA | Store nets | Akamai/AWS/Google/Azure | ✅ log_all | 🟠 **RESTRICT** | CIS-4.8, IAM-2, **Data-10** | **⬆️ ESCALATED: Data-10 added** |
 | **33** | Catch all to Zscaler | Any | ANY | ❌ no_log | 🔴 **REMOVE** | CIS-8.2, CIS-4.8, CIS-12.2, IAM-8, IAM-2, Data-10 | No change |
 
-> **v2 Note — Data-10 (M&S NFR) impact:** Rules 28, 29, 30 were previously REMEDIATE; they are now RESTRICT because Data-10 requires external data sharing to use minimal scope and TLS 1.2+. Using ALL services to Microsoft, Akamai, AWS, Google, and epayments.ingenico.com does not satisfy this requirement.
+> **v2 Note — Data-10 (Clarisys NFR) impact:** Rules 28, 29, 30 were previously REMEDIATE; they are now RESTRICT because Data-10 requires external data sharing to use minimal scope and TLS 1.2+. Using ALL services to Microsoft, Akamai, AWS, Google, and epayments.ingenico.com does not satisfy this requirement.
 
 **CIS v8.1 Control 4.8 Requirement:**
 > *"Uninstall or disable unnecessary services on enterprise assets and software."*
 
-**M&S Violation:** 16 of 34 rules (47%) permit ALL services, allowing any protocol and port combination. Reduces ability to detect anomalous traffic patterns and violates "restrict to minimum required" principle.
+**Clarisys Violation:** 16 of 34 rules (47%) permit ALL services, allowing any protocol and port combination. Reduces ability to detect anomalous traffic patterns and violates "restrict to minimum required" principle.
 
 **Remediation Path:**
 - **Rules 4, 11-12, 14:** Specify exact ports needed for GPU, CCTV, and internal services
@@ -129,7 +129,7 @@ Reports are now generated as professional M&S-branded HTML documents with **Red/
 
 ### ✅ Compliant Rules (18 rules) — v2
 
-These rules meet all CIS v8.1 IG3, ISO 27001, NIST CSF, PCI-DSS, and M&S NFR requirements:
+These rules meet all CIS v8.1 IG3, ISO 27001, NIST CSF, PCI-DSS, and Clarisys NFR requirements:
 
 | Rule # | Name | Logging | Services | Status | v1→v2 |
 |--------|------|---------|----------|--------|-------|
@@ -192,7 +192,7 @@ Action:      accept
 - 🟠 CIS-4.8/IAM-2: ALL services on payment VLAN
 - 🟠 CIS-12.2/Cloud-08: Destination is ANY
 - 🔴 PCI-DSS-4.1/Data-Enc-Transit: Payment VLAN allows ALL services — must restrict to HTTPS only
-- 🟠 Data-10/NFR-Data10 _(NEW in v2)_: External ANY destination with ALL services violates M&S Data Sharing Controls
+- 🟠 Data-10/NFR-Data10 _(NEW in v2)_: External ANY destination with ALL services violates Clarisys Data Sharing Controls
 
 **Recommendation:** 🔴 **REMOVE or RESTRICT** to `HTTPS` (443) + payment processor IPs only
 - PCI-DSS Requirement 4.1 mandates encrypted transport with scoped protocols
@@ -447,11 +447,11 @@ Action:      accept
 
 | Control | Standard | Violation Type | Affected Rules | Count |
 |---------|----------|----------------|----------------|-------|
-| **CIS-4.8 / IAM-2** | CIS v8.1 + M&S NFR | ALL services (least privilege) | 1, 4, 5, 11, 12, 14, 24, 25, 26, 27, 28, 29, 30, 33 | 14 rules |
-| **CIS-8.2 / IAM-8** | CIS v8.1 + M&S NFR | No logging | 1, 33 | 2 rules |
-| **CIS-12.2 / Cloud-08** | CIS v8.1 + M&S NFR | Destination ANY | 5, 10, 14, 20, 24, 33 | 6 rules |
+| **CIS-4.8 / IAM-2** | CIS v8.1 + Clarisys NFR | ALL services (least privilege) | 1, 4, 5, 11, 12, 14, 24, 25, 26, 27, 28, 29, 30, 33 | 14 rules |
+| **CIS-8.2 / IAM-8** | CIS v8.1 + Clarisys NFR | No logging | 1, 33 | 2 rules |
+| **CIS-12.2 / Cloud-08** | CIS v8.1 + Clarisys NFR | Destination ANY | 5, 10, 14, 20, 24, 33 | 6 rules |
 | **PCI-DSS-4.1** | PCI-DSS v3.2.1 | Payment VLAN unencrypted | 24 | 1 rule |
-| **Data-10** | M&S NFR _(new in v2)_ | External dest + ALL services | 5, 14, 28, 29, 30, 33 | 6 rules |
+| **Data-10** | Clarisys NFR _(new in v2)_ | External dest + ALL services | 5, 14, 28, 29, 30, 33 | 6 rules |
 
 ### By Action Required — v2
 
@@ -470,7 +470,7 @@ Action:      accept
 - [ ] **Rule 1 (INTRA CORP LAN ZONE):** Remove — verify Rules 2–3, 6–9 provide full coverage first
 - [ ] **Rule 33 (Catch all to Zscaler):** Remove — Rules 27–30 and Zscaler proxy handle this traffic
 - [ ] **Rule 24 (VLAN116 to DPDIA):** Remove or restrict to HTTPS (443) + payment processor IPs
-  - PCI-DSS Requirement 4.1 + M&S NFR Data-10 combined make this the highest business risk
+  - PCI-DSS Requirement 4.1 + Clarisys NFR Data-10 combined make this the highest business risk
   - Must coordinate with POS/payment team before applying
 
 ### Phase 2: Restrict (Weeks 2-3)
@@ -526,7 +526,7 @@ Action:      accept
   - Rule 24 (VLAN116 to DPDIA): ❌ Allows unencrypted protocols — now escalated to REMOVE or RESTRICT
   - **Must restrict to HTTPS (TLS 1.2+) only with explicit payment processor IPs**
 
-### M&S NFR Alignment (Added v2)
+### Clarisys NFR Alignment (Added v2)
 
 | NFR Control | Requirement | Rules Affected | Status |
 |-------------|-------------|----------------|--------|

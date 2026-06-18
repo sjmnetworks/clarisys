@@ -459,7 +459,7 @@ def test_compliance_coverage_returns_all_frameworks() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body["frameworks"]) == {"M&S NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
+    assert set(body["frameworks"]) == {"Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
     assert len(body["results"]) == 4
     iso = next(item for item in body["results"] if item["framework"] == "ISO 27001")
     assert iso["controls_mapped"] >= 1
@@ -471,7 +471,7 @@ def test_compliance_coverage_filters_to_single_framework() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["frameworks"] == ["M&S NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"]
+    assert body["frameworks"] == ["Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"]
     assert len(body["results"]) == 1
     result = body["results"][0]
     assert result["framework"] == "PCI-DSS"
@@ -654,13 +654,13 @@ def test_intake_evaluate_rejects_unknown_standards(intake_allow_request: dict) -
 
 
 def test_intake_evaluate_ms_nfr_cannot_be_removed(intake_allow_request: dict) -> None:
-    """Passing only non-M&S standards still enforces M&S NFR in the evaluation."""
+    """Passing only non-Clarisys standards still enforces Clarisys NFR in the evaluation."""
     intake_allow_request["standards"] = ["ISO 27001"]
     response = client.post("/intake/evaluate", json=intake_allow_request)
 
     assert response.status_code == 200
     body = response.json()
-    assert "M&S NFR" in body["intake"]["standards"]
+    assert "Clarisys NFR" in body["intake"]["standards"]
 
 
 def test_intake_bulk_propagates_standards_per_request(
@@ -676,8 +676,8 @@ def test_intake_bulk_propagates_standards_per_request(
     assert response.status_code == 200
     body = response.json()
     assert body["summary"]["total"] == 2
-    # ANY protocol request uses its own standards; allow request defaults to M&S NFR
-    assert "M&S NFR" in body["results"][0]["intake"]["standards"]
+    # ANY protocol request uses its own standards; allow request defaults to Clarisys NFR
+    assert "Clarisys NFR" in body["results"][0]["intake"]["standards"]
     assert "ISO 27001" in body["results"][1]["intake"]["standards"]
 
 
@@ -813,7 +813,7 @@ def test_audit_csv_html_reports_selected_standards() -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "Selected optional standards:</strong> ISO 27001" in response.text
-    assert "Baseline always enforced:</strong> M&amp;S NFR" in response.text
+    assert "Baseline always enforced:</strong> Clarisys NFR" in response.text
     assert "CIS v8.1" not in response.text.split("Selected optional standards:</strong>", 1)[1].split("</li>", 1)[0]
 
 
@@ -832,7 +832,7 @@ def test_audit_xlsx_html_reports_selected_standards() -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "Selected optional standards:</strong> PCI-DSS" in response.text
-    assert "Baseline always enforced:</strong> M&amp;S NFR" in response.text
+    assert "Baseline always enforced:</strong> Clarisys NFR" in response.text
 
 
 def test_audit_json_html_reports_selected_standards_for_json_upload() -> None:
@@ -846,7 +846,7 @@ def test_audit_json_html_reports_selected_standards_for_json_upload() -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "Selected optional standards:</strong> ISO 27001, PCI-DSS" in response.text
-    assert "Baseline always enforced:</strong> M&amp;S NFR" in response.text
+    assert "Baseline always enforced:</strong> Clarisys NFR" in response.text
 
 
 def test_audit_json_html_reports_selected_standards_for_xml_upload() -> None:
@@ -860,7 +860,7 @@ def test_audit_json_html_reports_selected_standards_for_xml_upload() -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "Selected optional standards:</strong> CIS v8.1" in response.text
-    assert "Baseline always enforced:</strong> M&amp;S NFR" in response.text
+    assert "Baseline always enforced:</strong> Clarisys NFR" in response.text
 
 
 def test_audit_json_cleaned_returns_json_artifact() -> None:

@@ -536,7 +536,7 @@
       "targets": [
         {
           "expr": "sum(firewall_failed_standard_ms_nfr_total)",
-          "legendFormat": "M&S NFR failures",
+          "legendFormat": "Clarisys NFR failures",
           "refId": "A"
         },
         {
@@ -828,7 +828,7 @@
       "targets": [
         {
           "expr": "increase(firewall_failed_standard_ms_nfr_total[5m])",
-          "legendFormat": "M&S NFR (5m)",
+          "legendFormat": "Clarisys NFR (5m)",
           "refId": "A"
         },
         {

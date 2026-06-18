@@ -2,7 +2,7 @@ package policy.firewall_compliance
 
 # ──────────────────────────────────────────────────────────────────────────────
 # COMPLIANCE-AWARE FIREWALL POLICY
-# Evaluates network traffic against M&S security standards:
+# Evaluates network traffic against Clarisys security standards:
 #   CIS Controls v8.1 (IG3), PCI-DSS v3.2.1, ISO 27001, NIST CSF
 # ──────────────────────────────────────────────────────────────────────────────
 

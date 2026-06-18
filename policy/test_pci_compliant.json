@@ -3,7 +3,7 @@
   "description": "Payment system traffic - should flag PCI-DSS requirements",
   "source": {
     "ip": "10.50.1.100",
-    "fqdn": "pos-terminal-1.store.marksandspencer.com"
+    "fqdn": "pos-terminal-1.store.clarisys.com"
   },
   "destination": {
     "ip": "178.21.210.135",

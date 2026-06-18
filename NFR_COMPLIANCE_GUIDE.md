@@ -1,8 +1,8 @@
-# M&S Security NFR Compliance Framework
+# Clarisys Security NFR Compliance Framework
 
 ## Overview
 
-This framework validates firewall rules, data flows, and cloud resources against M&S Security Non-Functional Requirements (NFRs) defined in Book1.xlsx.
+This framework validates firewall rules, data flows, and cloud resources against Clarisys Security Non-Functional Requirements (NFRs) defined in Book1.xlsx.
 
 **Framework Version:** 1.0  
 **Effective Date:** May 15, 2026  

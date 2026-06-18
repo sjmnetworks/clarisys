@@ -6,7 +6,7 @@ import data.policy.nfr_compliance
 # ──────────────────────────────────────────────────────────────────────────────
 # INTEGRATED COMPLIANCE DECISION
 # Combines firewall rule evaluation with comprehensive NFR compliance checking
-# Returns a unified assessment across all M&S security standards
+# Returns a unified assessment across all Clarisys security standards
 # ──────────────────────────────────────────────────────────────────────────────
 
 # Main integrated decision
@@ -225,7 +225,7 @@ generate_priority_sequence(critical_viol, high_viol) := sequence if {
 # Summary suitable for executive/audit review
 
 get_compliance_report := {
-    "report_title": "M&S Integrated Compliance Assessment",
+    "report_title": "Clarisys Integrated Compliance Assessment",
     "report_date": now_timestamp,
     "overall_status": overall_compliance_status,
     "compliance_score": calculate_compliance_score,

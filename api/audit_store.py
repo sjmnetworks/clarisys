@@ -1,5 +1,5 @@
 """
-Append-only audit-trail sink for the M&S Firewall Policy Compliance API.
+Append-only audit-trail sink for the Clarisys Firewall Policy Compliance API.
 
 Every evaluation (single, bulk, intake, audit/csv) is recorded as a single JSON
 record so the security team has a defensible, replayable evidence trail.

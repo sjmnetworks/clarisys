@@ -1,6 +1,6 @@
 {
   "_metadata": {
-    "framework": "M&S Security NFR Compliance Framework",
+    "framework": "Clarisys Security NFR Compliance Framework",
     "version": "1.0",
     "effective_date": "2026-05-15",
     "standards": ["CIS_v8.1_IG3", "ISO_27001", "NIST_CSF", "PCI_DSS_v3.2.1"],

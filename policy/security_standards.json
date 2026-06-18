@@ -2,7 +2,7 @@
   "_metadata": {
     "version": "1.0",
     "last_updated": "2026-05-15",
-    "description": "Network Security Standards Framework for M&S Stores",
+    "description": "Network Security Standards Framework for Clarisys Stores",
     "applicable_standards": ["CIS_v8.1", "ISO_27001", "PCI_DSS_v3.2.1", "NIST_CSF"],
     "note": "Update 'applicable_standards' based on your specific compliance requirements"
   },
@@ -120,7 +120,7 @@
     "CIS_v8.1": {
       "applies_to": ["All systems"],
       "implementation_group": "IG3",
-      "note": "M&S classified as IG3 (mature security program, complex environment)",
+      "note": "Clarisys classified as IG3 (mature security program, complex environment)",
       "network_relevant_controls": {
         "CIS-4": {
           "title": "Secure Configuration of Enterprise Assets and Software",
