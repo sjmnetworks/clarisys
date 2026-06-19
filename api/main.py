@@ -27,7 +27,7 @@ from typing import Literal
 from urllib.parse import urlparse
 
 from fastapi import Body, Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from api.auth import CallerIdentity, current_settings as auth_settings, require_scope
@@ -6304,6 +6304,12 @@ def _render_markdown_report(
 # ── Frontend static files (React SPA) ───────────────────────────────────────
 
 _FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect() -> Response:
+    """Redirect bare root to the SPA."""
+    return RedirectResponse(url="/app/", status_code=302)
 
 
 @app.get("/app/{path:path}", include_in_schema=False)
