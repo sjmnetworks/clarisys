@@ -76,7 +76,12 @@ export default function DashboardPage() {
   return (
     <div className="page-card">
       <div className="page-header">
-        <h1>Dashboard</h1>
+        <div>
+          <h1>Dashboard</h1>
+          <p className="muted" style={{ marginTop: 2, fontSize: '0.88rem' }}>
+            Welcome back, {user?.username}
+          </p>
+        </div>
         <span className="badge">{user?.role}</span>
       </div>
 

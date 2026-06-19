@@ -27,7 +27,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <span className="login-logo">◆</span>
+          <span className="login-logo">C</span>
           <h1>Clarisys</h1>
           <p>Firewall Compliance Platform</p>
         </div>

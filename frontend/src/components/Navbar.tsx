@@ -15,7 +15,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="navbar-logo">◆</span>
+        <span className="navbar-logo">C</span>
         Clarisys
       </div>
       <div className="navbar-links">
