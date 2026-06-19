@@ -3016,11 +3016,13 @@ def _record_audit(
     payload_summary: dict,
     verdict_summary: dict,
 ) -> None:
-    """Append a single evaluation record to the immutable audit trail."""
+    """Append a single evaluation record to the immutable audit trail
+    AND a summary entry in decision history so audits appear in the dashboard."""
     timer: RequestTimer | None = getattr(request.state, "timer", None)
     elapsed = timer.elapsed_ms() if timer else 0
+    request_id = getattr(request.state, "request_id", "unknown")
     event = make_event(
-        request_id=getattr(request.state, "request_id", "unknown"),
+        request_id=request_id,
         endpoint=endpoint,
         caller_sub=caller.sub if caller else None,
         payload_summary=payload_summary,
@@ -3031,6 +3033,51 @@ def _record_audit(
         get_audit_store().record(event)
     except Exception:  # noqa: BLE001 — audit-trail failure must not break the request
         log.exception("audit_store.record_failed", endpoint=endpoint)
+
+    # Also record in decision history so it shows in the dashboard/history page
+    try:
+        overall_status = verdict_summary.get("overall_status", "UNKNOWN")
+        acceptable = verdict_summary.get("acceptable", 0)
+        denied = verdict_summary.get("denied", 0)
+        verdict = "ACCEPTABLE" if denied == 0 and acceptable > 0 else "DENY" if denied > 0 else "UNKNOWN"
+        decision_id = _decision_id(request_id, endpoint)
+        append_decision_history(
+            {
+                "decision_id": decision_id,
+                "request_id": request_id,
+                "endpoint": endpoint,
+                "caller_sub": caller.sub if caller else "anonymous",
+                "tenant_id": caller.tenant_id if caller else "",
+                "action_requested": "audit",
+                "decision_verdict": verdict,
+                "overall_status": overall_status,
+                "overall_risk": "HIGH" if denied > 0 else "LOW",
+                "details": {
+                    "source": payload_summary.get("source_filename", "bulk-audit"),
+                    "destination": "compliance-check",
+                    "protocol": "audit",
+                    "port": 0,
+                    "failed_controls": verdict_summary.get("failed_controls", []),
+                    "failed_standards": [],
+                    "valid_rows": payload_summary.get("valid_rows", 0),
+                    "invalid_rows": payload_summary.get("invalid_rows", 0),
+                    "acceptable": acceptable,
+                    "denied": denied,
+                },
+            }
+        )
+        set_decision_lifecycle(
+            decision_id=decision_id,
+            status="evaluated",
+            actor=caller.sub if caller else "anonymous",
+            notes=f"Bulk audit via {endpoint}",
+        )
+        with _SLO_LOCK:
+            _SLO_COUNTERS["decisions_total"] += 1
+            if verdict == "DENY":
+                _SLO_COUNTERS["decisions_deny"] += 1
+    except Exception:  # noqa: BLE001
+        log.exception("decision_history.audit_record_failed", endpoint=endpoint)
 
 
 def _record_decision_history(
