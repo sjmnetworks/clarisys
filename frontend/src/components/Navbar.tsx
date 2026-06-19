@@ -24,6 +24,7 @@ export default function Navbar() {
           <NavLink to="/audit">Audit</NavLink>
         )}
         <NavLink to="/history">History</NavLink>
+        <NavLink to="/guide">Guide</NavLink>
         {user?.role === "admin" && (
           <NavLink to="/admin">Admin</NavLink>
         )}

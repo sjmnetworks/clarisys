@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AuditPage from "./pages/AuditPage";
 import HistoryPage from "./pages/HistoryPage";
 import AdminPage from "./pages/AdminPage";
+import UserGuidePage from "./pages/UserGuidePage";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute roles={["admin", "auditor"]}><AuditPage /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+            <Route path="/guide" element={<ProtectedRoute><UserGuidePage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
