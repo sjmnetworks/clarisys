@@ -308,10 +308,22 @@ _SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
-    "Cache-Control": "no-store",
-    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
     "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
 }
+
+# CSP for API responses (strict)
+_API_CSP = "default-src 'none'; frame-ancestors 'none'"
+# CSP for SPA HTML pages (must allow scripts/styles from same origin)
+_SPA_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'"
+
+
+@app.middleware("http")
+async def _strip_api_prefix(request: Request, call_next):
+    """Strip /api prefix so the SPA's fetch('/api/...') hits real routes."""
+    if request.url.path.startswith("/api/") or request.url.path == "/api":
+        new_path = request.url.path[4:] or "/"
+        request.scope["path"] = new_path
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -404,6 +416,14 @@ async def _enforce_body_size_and_security_headers(request: Request, call_next):
 
         for key, value in _SECURITY_HEADERS.items():
             response.headers.setdefault(key, value)
+        # Context-aware CSP: relaxed for SPA pages, strict for API
+        if request.url.path.startswith("/app"):
+            response.headers["Content-Security-Policy"] = _SPA_CSP
+            if "Cache-Control" in response.headers:
+                del response.headers["Cache-Control"]
+        else:
+            response.headers.setdefault("Content-Security-Policy", _API_CSP)
+            response.headers.setdefault("Cache-Control", "no-store")
         response.headers.setdefault("X-Request-Id", request_id)
         if IS_PRODUCTION:
             response.headers.setdefault(
