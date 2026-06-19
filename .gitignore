@@ -32,3 +32,7 @@ policy/decision_history.jsonl
 tests/remote_bulk_test.py
 tests/remote_bulk_response.json
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+

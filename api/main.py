@@ -3848,6 +3848,22 @@ def policy_metadata(_: CallerIdentity = Depends(require_scope("firewall.evaluate
 
 
 @app.get(
+    "/auth/whoami",
+    summary="Current authenticated user details",
+)
+def auth_whoami(
+    caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
+) -> JSONResponse:
+    claims = dict(caller.raw_claims) if caller.raw_claims else {}
+    return JSONResponse({
+        "username": claims.get("username", caller.sub),
+        "email": claims.get("email", ""),
+        "scopes": sorted(caller.scopes),
+        "sub": caller.sub,
+    })
+
+
+@app.get(
     "/compliance/coverage",
     summary="Framework coverage summary",
 )
@@ -5990,3 +6006,57 @@ def _render_markdown_report(
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+# ── Frontend static files (React SPA) ───────────────────────────────────────
+
+_FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
+
+
+@app.get("/app/{path:path}", include_in_schema=False)
+async def serve_frontend(path: str) -> Response:
+    """Serve React SPA static assets from frontend/dist/."""
+    if not _FRONTEND_DIR.is_dir():
+        raise HTTPException(status_code=404, detail="Frontend not built. Run: cd frontend && npm run build")
+
+    # Serve the requested file if it exists
+    file_path = _FRONTEND_DIR / path
+    # Prevent directory traversal
+    try:
+        file_path = file_path.resolve()
+        _FRONTEND_DIR.resolve()
+        if not str(file_path).startswith(str(_FRONTEND_DIR.resolve())):
+            raise HTTPException(status_code=403, detail="Forbidden")
+    except (ValueError, OSError):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    if file_path.is_file():
+        content_type = _guess_mime(file_path.suffix)
+        return Response(
+            content=file_path.read_bytes(),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=31536000, immutable"}
+            if file_path.suffix in {".js", ".css", ".woff2", ".woff", ".ttf"}
+            else {},
+        )
+
+    # Fallback to index.html for SPA client-side routing
+    index = _FRONTEND_DIR / "index.html"
+    if index.is_file():
+        return HTMLResponse(index.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Not found")
+
+
+def _guess_mime(suffix: str) -> str:
+    return {
+        ".js": "application/javascript",
+        ".css": "text/css",
+        ".html": "text/html",
+        ".json": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".ico": "image/x-icon",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+        ".ttf": "font/ttf",
+    }.get(suffix.lower(), "application/octet-stream")
