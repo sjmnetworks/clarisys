@@ -3015,9 +3015,11 @@ def _record_audit(
     endpoint: str,
     payload_summary: dict,
     verdict_summary: dict,
+    bulk_results: list[dict] | None = None,
+    bulk_requests: list | None = None,
 ) -> None:
-    """Append a single evaluation record to the immutable audit trail
-    AND a summary entry in decision history so audits appear in the dashboard."""
+    """Append to the immutable audit trail AND record per-rule entries in
+    decision history so each audited rule shows in the dashboard/history page."""
     timer: RequestTimer | None = getattr(request.state, "timer", None)
     elapsed = timer.elapsed_ms() if timer else 0
     request_id = getattr(request.state, "request_id", "unknown")
@@ -3034,50 +3036,84 @@ def _record_audit(
     except Exception:  # noqa: BLE001 — audit-trail failure must not break the request
         log.exception("audit_store.record_failed", endpoint=endpoint)
 
-    # Also record in decision history so it shows in the dashboard/history page
-    try:
-        overall_status = verdict_summary.get("overall_status", "UNKNOWN")
-        acceptable = verdict_summary.get("acceptable", 0)
-        denied = verdict_summary.get("denied", 0)
-        verdict = "ACCEPTABLE" if denied == 0 and acceptable > 0 else "DENY" if denied > 0 else "UNKNOWN"
-        decision_id = _decision_id(request_id, endpoint)
-        append_decision_history(
-            {
-                "decision_id": decision_id,
-                "request_id": request_id,
-                "endpoint": endpoint,
-                "caller_sub": caller.sub if caller else "anonymous",
-                "tenant_id": caller.tenant_id if caller else "",
-                "action_requested": "audit",
-                "decision_verdict": verdict,
-                "overall_status": overall_status,
-                "overall_risk": "HIGH" if denied > 0 else "LOW",
-                "details": {
-                    "source": payload_summary.get("source_filename", "bulk-audit"),
-                    "destination": "compliance-check",
-                    "protocol": "audit",
-                    "port": 0,
-                    "failed_controls": verdict_summary.get("failed_controls", []),
-                    "failed_standards": [],
-                    "valid_rows": payload_summary.get("valid_rows", 0),
-                    "invalid_rows": payload_summary.get("invalid_rows", 0),
-                    "acceptable": acceptable,
-                    "denied": denied,
-                },
-            }
-        )
-        set_decision_lifecycle(
-            decision_id=decision_id,
-            status="evaluated",
-            actor=caller.sub if caller else "anonymous",
-            notes=f"Bulk audit via {endpoint}",
-        )
-        with _SLO_LOCK:
-            _SLO_COUNTERS["decisions_total"] += 1
-            if verdict == "DENY":
-                _SLO_COUNTERS["decisions_deny"] += 1
-    except Exception:  # noqa: BLE001
-        log.exception("decision_history.audit_record_failed", endpoint=endpoint)
+    # Record per-row entries when individual results are available
+    if bulk_results and bulk_requests:
+        try:
+            for idx, (req, res) in enumerate(zip(bulk_requests, bulk_results)):
+                row_verdict = res.get("verdict", "UNKNOWN")
+                req_dict = res.get("request", {})
+                decision_id = _decision_id(f"{request_id}:{idx}", endpoint)
+                append_decision_history(
+                    {
+                        "decision_id": decision_id,
+                        "request_id": request_id,
+                        "endpoint": endpoint,
+                        "caller_sub": caller.sub if caller else "anonymous",
+                        "tenant_id": caller.tenant_id if caller else "",
+                        "action_requested": req_dict.get("action", "audit"),
+                        "decision_verdict": row_verdict,
+                        "overall_status": res.get("overall_status", "UNKNOWN"),
+                        "overall_risk": res.get("overall_risk", "UNKNOWN"),
+                        "details": {
+                            "source": req_dict.get("source", ""),
+                            "destination": req_dict.get("destination", ""),
+                            "protocol": req_dict.get("protocol", ""),
+                            "port": req_dict.get("port", 0),
+                            "failed_controls": res.get("failed_controls", []),
+                            "failed_standards": res.get("failed_standards", []),
+                            "reason": res.get("reason", ""),
+                            "remediations": [
+                                v.get("remediation", "")
+                                for v in res.get("violations", [])
+                                if v.get("remediation")
+                            ],
+                        },
+                    }
+                )
+                record_rule_processed(f"{request_id}:{idx}", endpoint, row_verdict)
+                with _SLO_LOCK:
+                    _SLO_COUNTERS["decisions_total"] += 1
+                    if row_verdict == "DENY":
+                        _SLO_COUNTERS["decisions_deny"] += 1
+        except Exception:  # noqa: BLE001
+            log.exception("decision_history.audit_rows_failed", endpoint=endpoint)
+    else:
+        # Fallback: record a single summary entry when no per-row data
+        try:
+            overall_status = verdict_summary.get("overall_status", "UNKNOWN")
+            acceptable = verdict_summary.get("acceptable", 0)
+            denied = verdict_summary.get("denied", 0)
+            verdict = "ACCEPTABLE" if denied == 0 and acceptable > 0 else "DENY" if denied > 0 else "UNKNOWN"
+            decision_id = _decision_id(request_id, endpoint)
+            append_decision_history(
+                {
+                    "decision_id": decision_id,
+                    "request_id": request_id,
+                    "endpoint": endpoint,
+                    "caller_sub": caller.sub if caller else "anonymous",
+                    "tenant_id": caller.tenant_id if caller else "",
+                    "action_requested": "audit",
+                    "decision_verdict": verdict,
+                    "overall_status": overall_status,
+                    "overall_risk": "HIGH" if denied > 0 else "LOW",
+                    "details": {
+                        "source": payload_summary.get("source_filename", "bulk-audit"),
+                        "destination": "compliance-check",
+                        "protocol": "audit",
+                        "port": 0,
+                        "failed_controls": verdict_summary.get("failed_controls", []),
+                        "failed_standards": [],
+                        "acceptable": acceptable,
+                        "denied": denied,
+                    },
+                }
+            )
+            with _SLO_LOCK:
+                _SLO_COUNTERS["decisions_total"] += 1
+                if verdict == "DENY":
+                    _SLO_COUNTERS["decisions_deny"] += 1
+        except Exception:  # noqa: BLE001
+            log.exception("decision_history.audit_record_failed", endpoint=endpoint)
 
 
 def _record_decision_history(
@@ -5408,7 +5444,7 @@ def _render_cleaned_raw_csv(rows: list[dict]) -> str:
     return buf.getvalue()
 
 
-def _evaluate_csv_text(text: str, standards: list[str] | None = None) -> tuple[str, dict, list[dict], list[AuditInvalidRow], list[dict]]:
+def _evaluate_csv_text(text: str, standards: list[str] | None = None) -> tuple[str, dict, list[dict], list[AuditInvalidRow], list[dict], list]:
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
         raise HTTPException(status_code=400, detail="CSV is missing a header row.")
@@ -5444,16 +5480,19 @@ def _evaluate_csv_text(text: str, standards: list[str] | None = None) -> tuple[s
 
     summary: dict = {}
     results: list[dict] = []
+    evaluated_requests: list = []
     if kind in {"raw", "raw_paloalto"} and valid_raw:
         bulk = _compute_evaluate_bulk(BulkRequest(requests=valid_raw))
         summary = bulk.summary.model_dump()
         results = [r.model_dump() for r in bulk.results]
+        evaluated_requests = valid_raw
     elif kind == "intake" and valid_intake:
         bulk = _compute_evaluate_intake_bulk(IntakeBulkRequest(requests=valid_intake))
         summary = bulk.summary.model_dump()
         results = [r.model_dump() for r in bulk.results]
+        evaluated_requests = valid_intake
 
-    return kind, summary, results, invalid, normalized_rows
+    return kind, summary, results, invalid, normalized_rows, evaluated_requests
 
 
 @app.post(
@@ -5493,7 +5532,7 @@ async def audit_csv(
         raise HTTPException(status_code=400, detail="Empty CSV body.")
 
     text = body_bytes.decode("utf-8-sig", errors="replace")
-    kind, summary, results, invalid, _normalized_rows = _evaluate_csv_text(text)
+    kind, summary, results, invalid, _normalized_rows, evaluated_requests = _evaluate_csv_text(text)
 
     report = _render_markdown_report(kind, summary, results, invalid)
     _record_audit(
@@ -5511,6 +5550,8 @@ async def audit_csv(
             "denied": summary.get("denied", 0),
             "failed_controls": summary.get("failed_controls", []),
         },
+        bulk_results=results,
+        bulk_requests=evaluated_requests,
     )
     return Response(
         content=report,
@@ -5554,7 +5595,7 @@ async def audit_csv_html(
         raise HTTPException(status_code=400, detail="Uploaded CSV file is empty.")
 
     text = body_bytes.decode("utf-8-sig", errors="replace")
-    kind, summary, results, invalid, _normalized_rows = _evaluate_csv_text(text, standards=standards if standards else None)
+    kind, summary, results, invalid, _normalized_rows, evaluated_requests = _evaluate_csv_text(text, standards=standards if standards else None)
 
     report_markdown = _render_markdown_report(kind, summary, results, invalid)
     report_html = _markdown_to_html_document(report_markdown)
@@ -5576,6 +5617,8 @@ async def audit_csv_html(
             "denied": summary.get("denied", 0),
             "failed_controls": summary.get("failed_controls", []),
         },
+        bulk_results=results,
+        bulk_requests=evaluated_requests,
     )
 
     return Response(
@@ -5628,7 +5671,7 @@ async def audit_csv_cleaned(
         raise HTTPException(status_code=413, detail="Uploaded CSV exceeds configured size limit.")
 
     text = body_bytes.decode("utf-8-sig", errors="replace")
-    kind, _summary, _results, invalid, normalized_rows = _evaluate_csv_text(text, standards=standards if standards else None)
+    kind, _summary, _results, invalid, normalized_rows, _evaluated_requests = _evaluate_csv_text(text, standards=standards if standards else None)
 
     report_name = Path(filename).stem.replace(" ", "-")[:60] or "firewall-rules"
     _record_audit(
@@ -5755,6 +5798,8 @@ async def audit_xlsx(
             "denied": summary.get("denied", 0),
             "failed_controls": summary.get("failed_controls", []),
         },
+        bulk_results=results,
+        bulk_requests=valid_raw,
     )
 
     report_name = Path(filename).stem.replace(" ", "-")[:60] or "compliance-report"
@@ -5938,6 +5983,8 @@ async def audit_json_html(
             "denied": summary.get("denied", 0),
             "failed_controls": summary.get("failed_controls", []),
         },
+        bulk_results=results,
+        bulk_requests=valid_raw,
     )
 
     report_name = Path(filename).stem.replace(" ", "-")[:60] or "juniper-compliance-report"

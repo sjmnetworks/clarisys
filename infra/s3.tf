@@ -4,6 +4,8 @@ resource "aws_s3_bucket" "audit" {
   count  = var.enable_s3_audit ? 1 : 0
   bucket = "${var.project_name}-audit-${data.aws_caller_identity.current.account_id}"
 
+  object_lock_enabled = true
+
   tags = { Name = "${var.project_name}-audit" }
 }
 
@@ -40,6 +42,8 @@ resource "aws_s3_bucket_public_access_block" "audit" {
 resource "aws_s3_bucket_object_lock_configuration" "audit" {
   count  = var.enable_s3_audit ? 1 : 0
   bucket = aws_s3_bucket.audit[0].id
+
+  depends_on = [aws_s3_bucket_versioning.audit]
 
   rule {
     default_retention {
