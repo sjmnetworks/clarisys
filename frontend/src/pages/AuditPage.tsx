@@ -1,7 +1,7 @@
 import { useState, useRef, type FormEvent } from "react";
 import { useApi } from "../hooks/useApi";
 
-const STANDARDS = ["ISO 27001", "CIS v8.1", "PCI-DSS"];
+const STANDARDS = ["ISO 27001", "CIS v8.1", "PCI-DSS", "Cyber Essentials"];
 
 interface AuditSummary {
   total: number;

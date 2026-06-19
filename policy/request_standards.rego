@@ -33,10 +33,16 @@ pci_dss_requested if {
     s == "PCI-DSS"
 }
 
-# CIS_13.6 belongs to ISO 27001 and CIS v8.1 only; PCI-DSS does not require
+cyber_essentials_requested if {
+    some s in requested_standards
+    s == "Cyber Essentials"
+}
+
+# CIS_13.6 belongs to ISO 27001, CIS v8.1 and Cyber Essentials; PCI-DSS does not require
 # dropped-traffic logging and Clarisys NFR does not mandate it for deny rules.
 cis_13_6_applicable if { iso27001_requested }
 cis_13_6_applicable if { cis_v81_requested }
+cis_13_6_applicable if { cyber_essentials_requested }
 
 decision := {
     "compliant": count(violations) == 0,
@@ -77,7 +83,7 @@ violations contains v if {
     lower(object.get(input, "protocol", "")) == "any"
     v := {
         "control": "CIS_4.8",
-        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR",
+        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR / Cyber Essentials",
         "severity": "HIGH",
         "violation": "Protocol ANY is overly permissive",
         "details": "Protocol ANY broadens the request beyond least-privilege scope.",
@@ -90,7 +96,7 @@ violations contains v if {
     input.log == "no_log"
     v := {
         "control": "IAM-8 / Cloud-09 / CIS_8.2",
-        "standard": "ISO 27001 / CIS v8.1 / Clarisys NFR",
+        "standard": "ISO 27001 / CIS v8.1 / Clarisys NFR / Cyber Essentials",
         "severity": "HIGH",
         "violation": "Allow request does not enable logging",
         "details": "ISO 27001 and CIS IG3 require an audit trail for permitted traffic.",
@@ -104,7 +110,7 @@ violations contains v if {
     cis_13_6_applicable
     v := {
         "control": "CIS_13.6",
-        "standard": "ISO 27001 / CIS v8.1",
+        "standard": "ISO 27001 / CIS v8.1 / Cyber Essentials",
         "severity": "MEDIUM",
         "violation": "Deny request does not enable dropped-traffic logging",
         "details": "Dropped traffic should be logged for SOC visibility and forensics.",
@@ -118,7 +124,7 @@ violations contains v if {
     input.protocol != "icmp"
     v := {
         "control": "CIS_4.8",
-        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR",
+        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR / Cyber Essentials",
         "severity": "HIGH",
         "violation": "Request is overly permissive",
         "details": "Port 0 implies unrestricted service scope and violates least privilege.",
@@ -130,7 +136,7 @@ violations contains v if {
     not segmented
     v := {
         "control": "Cloud-08 / CIS_12.2",
-        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR",
+        "standard": "CIS v8.1 / ISO 27001 / Clarisys NFR / Cyber Essentials",
         "severity": "HIGH",
         "violation": "Request lacks network segmentation metadata",
         "details": "Source and destination interface context should be supplied for zero-trust segmentation checks.",
@@ -218,19 +224,19 @@ missing_contract_reference if {
     trim(object.get(input, "contract_reference", ""), " ") == ""
 }
 
-encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS" if {
+encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS / Cyber Essentials" if {
     contains(lower(input.destination), "payment")
 }
 
-encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS" if {
+encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS / Cyber Essentials" if {
     contains(lower(input.destination), "pos")
 }
 
-encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS" if {
+encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / PCI-DSS / Cyber Essentials" if {
     contains(lower(input.destination), "card")
 }
 
-encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR" if {
+encryption_standard := "ISO 27001 / CIS v8.1 / Clarisys NFR / Cyber Essentials" if {
     sensitive_request
     not contains(lower(input.destination), "payment")
     not contains(lower(input.destination), "pos")

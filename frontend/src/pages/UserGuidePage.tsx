@@ -49,7 +49,7 @@ export default function UserGuidePage() {
       {/* ── Compliance Standards ───────────────────────── */}
       <section className="guide-section">
         <h2>Compliance Standards</h2>
-        <p>Every rule is evaluated against the selected frameworks. All three are enabled by default.</p>
+        <p>Every rule is evaluated against the selected frameworks. All four are enabled by default.</p>
         <table className="guide-table">
           <thead>
             <tr><th>Standard</th><th>Focus</th><th>Example Controls</th></tr>
@@ -69,6 +69,11 @@ export default function UserGuidePage() {
               <td><strong>PCI-DSS</strong></td>
               <td>Payment Card Industry Data Security</td>
               <td>Encryption for cardholder data, segmentation controls</td>
+            </tr>
+            <tr>
+              <td><strong>Cyber Essentials</strong></td>
+              <td>NCSC UK — Boundary firewalls &amp; secure configuration</td>
+              <td>CE-FW-1 (boundary firewalls), CE-SC-1 (secure config), CE-FW-3 (least privilege)</td>
             </tr>
           </tbody>
         </table>

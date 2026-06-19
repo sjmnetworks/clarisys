@@ -3,7 +3,8 @@
     "Clarisys NFR",
     "ISO 27001",
     "CIS v8.1",
-    "PCI-DSS"
+    "PCI-DSS",
+    "Cyber Essentials"
   ],
   "controls": {
     "Enc-Transit": {
@@ -13,7 +14,8 @@
         "Clarisys NFR": ["NFR-ENC-001"],
         "ISO 27001": ["A.8.24"],
         "CIS v8.1": ["3.10"],
-        "PCI-DSS": ["4.2.1"]
+        "PCI-DSS": ["4.2.1"],
+        "Cyber Essentials": ["CE-SC-1"]
       }
     },
     "CIS_4.8": {
@@ -22,7 +24,8 @@
       "mappings": {
         "Clarisys NFR": ["NFR-NET-004"],
         "ISO 27001": ["A.8.20"],
-        "CIS v8.1": ["4.8"]
+        "CIS v8.1": ["4.8"],
+        "Cyber Essentials": ["CE-FW-3", "CE-SC-1"]
       }
     },
     "Cloud-08 / CIS_12.2": {
@@ -31,7 +34,8 @@
       "mappings": {
         "Clarisys NFR": ["NFR-NET-002"],
         "ISO 27001": ["A.8.20"],
-        "CIS v8.1": ["12.2"]
+        "CIS v8.1": ["12.2"],
+        "Cyber Essentials": ["CE-FW-1"]
       }
     },
     "IAM-8 / Cloud-09 / CIS_8.2": {
@@ -41,7 +45,8 @@
         "Clarisys NFR": ["NFR-LOG-001"],
         "ISO 27001": ["A.8.15", "A.8.16"],
         "CIS v8.1": ["8.2"],
-        "PCI-DSS": ["10.2"]
+        "PCI-DSS": ["10.2"],
+        "Cyber Essentials": ["CE-FW-2"]
       }
     },
     "CIS_13.6": {
@@ -49,7 +54,8 @@
       "status": "implemented",
       "mappings": {
         "ISO 27001": ["A.8.15"],
-        "CIS v8.1": ["13.6"]
+        "CIS v8.1": ["13.6"],
+        "Cyber Essentials": ["CE-FW-2"]
       }
     },
     "Data-01": {

@@ -3,7 +3,7 @@ package policy.firewall_compliance
 # ──────────────────────────────────────────────────────────────────────────────
 # COMPLIANCE-AWARE FIREWALL POLICY
 # Evaluates network traffic against Clarisys security standards:
-#   CIS Controls v8.1 (IG3), PCI-DSS v3.2.1, ISO 27001, NIST CSF
+#   CIS Controls v8.1 (IG3), PCI-DSS v3.2.1, ISO 27001, NIST CSF, Cyber Essentials
 # ──────────────────────────────────────────────────────────────────────────────
 
 # Default: implicit deny
@@ -45,7 +45,7 @@ decision := result if {
 # ──────────────────────────────────────────────────────────────────────────────
 
 collect_applicable_standards(rule, req) := standards if {
-    base  := {"CIS_v8.1", "ISO_27001", "NIST_CSF"}
+    base  := {"CIS_v8.1", "ISO_27001", "NIST_CSF", "Cyber_Essentials"}
     pci   := {s | is_payment_system(rule, req); s := "PCI_DSS"}
     standards := base | pci
 }
@@ -132,7 +132,24 @@ validate_against_standards(rule, req, standards) := warnings if {
         svc == "ALL"
         w := "CIS v8.1 Control 4.8: Rule permits ALL services - restrict to minimum required ports/protocols"
     }
-    warnings := w_pci | w_iso | w_nist | w_cis8 | w_cis12 | w_cis13 | w_cis4
+    w_ce_fw := {w |
+        "Cyber_Essentials" in standards
+        rule.log == "no_log"
+        w := "Cyber Essentials FW: All firewall rules must have logging enabled for audit trail"
+    }
+    w_ce_sc := {w |
+        "Cyber_Essentials" in standards
+        some svc in rule.services
+        svc == "ALL"
+        w := "Cyber Essentials SC: Disable unnecessary services - rule permits ALL services"
+    }
+    w_ce_seg := {w |
+        "Cyber_Essentials" in standards
+        count(rule.source.interfaces) == 0
+        count(rule.source.addresses) == 0
+        w := "Cyber Essentials FW: Boundary firewall rule has no source context for segmentation"
+    }
+    warnings := w_pci | w_iso | w_nist | w_cis8 | w_cis12 | w_cis13 | w_cis4 | w_ce_fw | w_ce_sc | w_ce_seg
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

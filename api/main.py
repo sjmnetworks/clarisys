@@ -114,17 +114,17 @@ _EXTERNAL_IP_RANGES = (
 )
 
 CONTROL_STANDARD_MAP = {
-    "Enc-Transit": ["ISO 27001", "CIS v8.1", "Clarisys NFR", "PCI-DSS"],
-    "CIS_4.8": ["CIS v8.1", "ISO 27001", "Clarisys NFR"],
-    "Cloud-08 / CIS_12.2": ["CIS v8.1", "ISO 27001", "Clarisys NFR"],
-    "IAM-8 / Cloud-09 / CIS_8.2": ["ISO 27001", "CIS v8.1", "Clarisys NFR"],
-    "CIS_13.6": ["CIS v8.1", "ISO 27001"],
+    "Enc-Transit": ["ISO 27001", "CIS v8.1", "Clarisys NFR", "PCI-DSS", "Cyber Essentials"],
+    "CIS_4.8": ["CIS v8.1", "ISO 27001", "Clarisys NFR", "Cyber Essentials"],
+    "Cloud-08 / CIS_12.2": ["CIS v8.1", "ISO 27001", "Clarisys NFR", "Cyber Essentials"],
+    "IAM-8 / Cloud-09 / CIS_8.2": ["ISO 27001", "CIS v8.1", "Clarisys NFR", "Cyber Essentials"],
+    "CIS_13.6": ["CIS v8.1", "ISO 27001", "Cyber Essentials"],
     "Data-01": ["Clarisys NFR", "ISO 27001"],
     "Data-10": ["Clarisys NFR", "ISO 27001"],
     "Data-11": ["Clarisys NFR", "ISO 27001"],
 }
 
-ALLOWED_STANDARDS = {"ISO 27001", "CIS v8.1", "PCI-DSS"}
+ALLOWED_STANDARDS = {"ISO 27001", "CIS v8.1", "PCI-DSS", "Cyber Essentials"}
 
 _POLICY_SIGNING_KEY = os.environ.get("POLICY_SIGNING_KEY", "").encode("utf-8")
 _POLICY_WEBHOOK_URLS = [
@@ -221,6 +221,7 @@ _SLO_COUNTERS = {
     "failed_standard_iso_27001_total": 0,
     "failed_standard_cis_v81_total": 0,
     "failed_standard_pci_dss_total": 0,
+    "failed_standard_cyber_essentials_total": 0,
 }
 _SLO_LATENCIES_MS = deque(maxlen=5000)
 # Separate per-endpoint deques for stream total-duration p95 (populated on
@@ -1078,6 +1079,7 @@ def _canonical_standard_key(standard: str) -> str | None:
         "cis v8.1": "failed_standard_cis_v81_total",
         "pci-dss": "failed_standard_pci_dss_total",
         "pci dss": "failed_standard_pci_dss_total",
+        "cyber essentials": "failed_standard_cyber_essentials_total",
     }
     return lookup.get(standard.strip().lower())
 

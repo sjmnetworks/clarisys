@@ -41,7 +41,7 @@ build_audit_trail := trail if {
         "cloud_resources_evaluated": count(input.cloud_resources),
         "identity_ops_evaluated": count(input.identity_operations),
         "decision_timestamp": now_timestamp,
-        "evaluation_framework": "CIS_v8.1_IG3 + ISO_27001 + NIST_CSF + PCI_DSS"
+        "evaluation_framework": "CIS_v8.1_IG3 + ISO_27001 + NIST_CSF + PCI_DSS + Cyber_Essentials"
     }
 }
 
