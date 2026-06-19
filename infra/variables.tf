@@ -45,3 +45,9 @@ variable "api_key_secret_arn" {
   type        = string
   default     = ""
 }
+
+variable "jwt_secret_arn" {
+  description = "ARN of Secrets Manager secret containing the JWT signing key (optional — auto-generated if empty)"
+  type        = string
+  default     = ""
+}

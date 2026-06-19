@@ -1,8 +1,15 @@
 # Copy to terraform.tfvars and fill in values
-aws_region      = "eu-west-2"
-project_name    = "firewall-api"
-domain_name     = ""         # e.g. "firewall-api.yourcompany.com" — leave empty to use ALB DNS
-container_cpu   = 256        # 0.25 vCPU
-container_memory = 512       # MB
-desired_count   = 1
-enable_s3_audit = true
+aws_region       = "eu-west-2"
+project_name     = "clarisys"
+domain_name      = ""         # e.g. "clarisys.yourcompany.com" — leave empty to use ALB DNS
+container_cpu    = 512        # 0.5 vCPU
+container_memory = 1024       # MB
+desired_count    = 1
+enable_s3_audit  = true
+
+# Optional: ARN of a Secrets Manager secret containing the JWT signing key.
+# If empty, the app auto-generates an ephemeral key (not suitable for multi-instance).
+jwt_secret_arn = ""
+
+# Optional: ARN of Secrets Manager secret with pilot API keys JSON
+api_key_secret_arn = ""

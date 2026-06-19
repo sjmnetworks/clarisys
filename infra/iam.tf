@@ -21,6 +21,29 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Allow ECS execution role to read secrets (JWT_SECRET, API keys)
+resource "aws_iam_role_policy" "ecs_execution_secrets" {
+  count = var.jwt_secret_arn != "" || var.api_key_secret_arn != "" ? 1 : 0
+  name  = "${var.project_name}-secrets-read"
+  role  = aws_iam_role.ecs_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = compact([
+          var.jwt_secret_arn,
+          var.api_key_secret_arn,
+        ])
+      }
+    ]
+  })
+}
+
 # Task role (S3 access for audit backend, EFS)
 resource "aws_iam_role" "ecs_task" {
   name = "${var.project_name}-ecs-task"

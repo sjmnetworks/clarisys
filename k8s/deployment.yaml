@@ -29,6 +29,11 @@ data:
   AUDIT_ENCRYPTION_ENABLED: "false"
   REQUEST_SIGNING_ENABLED: "false"
   RATE_LIMIT_REDIS_ENABLED: "false"
+  USERS_FILE: "/mnt/state/users.json"
+  PILOT_USERS_FILE: "/mnt/state/pilot_users.json"
+  DECISION_HISTORY_FILE: "/mnt/state/decision_history.jsonl"
+  DECISION_LIFECYCLE_FILE: "/mnt/state/decision_lifecycle.json"
+  EVIDENCE_DIR: "/mnt/state/evidence"
 
 ---
 # ServiceAccount: identity for pod security
@@ -83,8 +88,20 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  # Use local storage class if available
-  # storageClassName: local-path
+
+---
+# PersistentVolumeClaim: application state (users, decisions, evidence)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: firewall-state-pvc
+  namespace: firewall-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
 
 ---
 # Service: expose firewall-api internally
@@ -145,12 +162,14 @@ spec:
 
       # Init container: prepare volumes
       initContainers:
-        - name: init-audit-dir
+        - name: init-dirs
           image: busybox:1.35
-          command: ["mkdir", "-p", "/var/log/firewall-audit"]
+          command: ["sh", "-c", "mkdir -p /var/log/firewall-audit /mnt/state/evidence"]
           volumeMounts:
             - name: audit-storage
               mountPath: /var/log/firewall-audit
+            - name: state-storage
+              mountPath: /mnt/state
           securityContext:
             runAsUser: 0
             allowPrivilegeEscalation: false
@@ -177,6 +196,12 @@ spec:
           
           # Sensitive env vars: load from Secrets
           env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: firewall-api-secrets
+                  key: JWT_SECRET
+                  optional: true
             - name: AUTH_ISSUER
               valueFrom:
                 secretKeyRef:
@@ -251,6 +276,8 @@ spec:
           volumeMounts:
             - name: audit-storage
               mountPath: /var/log/firewall-audit
+            - name: state-storage
+              mountPath: /mnt/state
             - name: tmp
               mountPath: /tmp
             - name: jwks-cert
@@ -262,6 +289,9 @@ spec:
         - name: audit-storage
           persistentVolumeClaim:
             claimName: firewall-audit-pvc
+        - name: state-storage
+          persistentVolumeClaim:
+            claimName: firewall-state-pvc
         - name: tmp
           emptyDir: {}
         - name: jwks-cert

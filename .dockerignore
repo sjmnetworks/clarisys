@@ -3,31 +3,62 @@
 .github
 .gitignore
 .vscode
+.idea
 .venv
 .pytest_cache
+.mypy_cache
 __pycache__
 **/__pycache__
 *.pyc
 *.pyo
 *.pyd
 
+# Frontend node_modules (built in docker stage)
+frontend/node_modules
+frontend/.vite
+frontend/dist
+
+# Terraform state (never ship)
+infra/terraform.tfstate*
+infra/tfplan
+infra/.terraform
+
 # Docs / decks / reports — not needed in the runtime image
 board-deck.html
-board-pack.html
-templates/README.md
-templates/board-deck-template.html
+roi-dashboard.html
+compliance-report-*.html
+compliance-report-*.md
 README.md
+AUDIT_RUNBOOK.md
+BACKLOG.md
+JUNIPER_SRX_AUDIT.md
 NFR_COMPLIANCE_GUIDE.md
-compliance-report.md
+PHASE_4_SECRETS_ROTATION.md
+TEST_METRICS_ISOLATION.md
 *.pdf
 *.xlsx
 *.csv
 
 # Local test scaffolding
 tests/
+test-payloads/
 tools/
+scripts/
 generate_data.py
+create_pilot_user.py
+pytest.ini
 start_api.sh
+
+# Data files (state lives on EFS in production)
+policy/decision_history.jsonl*
+policy/decision_lifecycle.json*
+policy/pilot_users.json
+policy/users.json
+
+# Deploy / k8s / infra — not needed inside the container
+deploy/
+k8s/
+infra/
 
 # OS noise
 .DS_Store

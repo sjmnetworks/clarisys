@@ -63,14 +63,21 @@ resource "aws_ecs_task_definition" "api" {
         { name = "AUDIT_S3_PREFIX", value = "audit/" },
         { name = "AUDIT_S3_OBJECT_LOCK_MODE", value = "GOVERNANCE" },
         { name = "DECISION_HISTORY_FILE", value = "/mnt/state/decision_history.jsonl" },
+        { name = "DECISION_LIFECYCLE_FILE", value = "/mnt/state/decision_lifecycle.json" },
+        { name = "USERS_FILE", value = "/mnt/state/users.json" },
+        { name = "PILOT_USERS_FILE", value = "/mnt/state/pilot_users.json" },
+        { name = "EVIDENCE_DIR", value = "/mnt/state/evidence" },
         { name = "RATE_LIMIT_ENABLED", value = "true" },
         { name = "RATE_LIMIT_WINDOW_SECS", value = "60" },
         { name = "RATE_LIMIT_QUOTA_EVALUATE_PER_MIN", value = "100" },
         { name = "RATE_LIMIT_QUOTA_BULK_PER_MIN", value = "20" },
         { name = "RATE_LIMIT_QUOTA_AUDIT_PER_MIN", value = "10" },
         { name = "LOG_LEVEL", value = "INFO" },
-        { name = "EVIDENCE_DIR", value = "/mnt/state/evidence" },
       ]
+
+      secrets = var.jwt_secret_arn != "" ? [
+        { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn },
+      ] : []
 
       mountPoints = [{
         sourceVolume  = "state"
