@@ -4,12 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 interface DashboardData {
   rulesProcessed: number;
-  costSaved: string;
-  hipsSaved: number;
-  hoursSaved: number;
   policyVersion: string;
-  policyHash: string;
-  sloUptime: string;
   recentDecisions: Decision[];
 }
 
@@ -19,6 +14,17 @@ interface Decision {
   timestamp: string;
   endpoint: string;
   overall_risk: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeDecision(d: any): Decision {
+  return {
+    decision_id: d.decision_id ?? "",
+    verdict: d.verdict ?? d.decision_verdict ?? "",
+    timestamp: d.timestamp ?? d.ts ?? "",
+    endpoint: d.endpoint ?? "",
+    overall_risk: d.overall_risk ?? d.details?.overall_risk ?? "",
+  };
 }
 
 export default function DashboardPage() {
@@ -32,32 +38,26 @@ export default function DashboardPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [roiResp, policyResp, sloResp, histResp] = await Promise.all([
+        const [roiResp, policyResp, histResp] = await Promise.all([
           get("/metrics/roi"),
           get("/policy/metadata"),
-          get("/metrics/slo"),
           get("/decisions/history?limit=10"),
         ]);
         const roi = await roiResp.json();
         const policy = await policyResp.json();
-        const slo = await sloResp.json();
         const hist = await histResp.json();
         if (!cancelled) {
           setData({
             rulesProcessed: roi.rules_processed ?? 0,
-            costSaved: roi.cost_saved_formatted ?? "£0",
-            hipsSaved: roi.hips_equivalent ?? 0,
-            hoursSaved: roi.hours_saved ?? 0,
             policyVersion: policy.policy_version ?? "unknown",
-            policyHash: policy.policy_hash?.slice(0, 12) ?? "",
-            sloUptime: slo.uptime_percent != null
-              ? `${Number(slo.uptime_percent).toFixed(2)}%`
-              : "N/A",
-            recentDecisions: Array.isArray(hist.decisions)
-              ? hist.decisions.slice(0, 10)
-              : Array.isArray(hist)
-                ? hist.slice(0, 10)
-                : [],
+            recentDecisions: (Array.isArray(hist.items)
+              ? hist.items
+              : Array.isArray(hist.decisions)
+                ? hist.decisions
+                : Array.isArray(hist)
+                  ? hist
+                  : []
+            ).slice(0, 10).map(normalizeDecision),
           });
         }
       } catch (err) {
@@ -87,23 +87,12 @@ export default function DashboardPage() {
 
       <div className="stat-grid">
         <StatCard label="Rules Processed" value={data.rulesProcessed.toLocaleString()} />
-        <StatCard label="Cost Saved" value={data.costSaved} accent />
-        <StatCard label="HIPS Equivalent" value={data.hipsSaved.toLocaleString()} />
-        <StatCard label="Hours Saved" value={data.hoursSaved.toLocaleString()} />
       </div>
 
       <div className="info-row">
         <div className="info-item">
           <span className="info-label">Policy</span>
           <span className="info-value">{data.policyVersion}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">Hash</span>
-          <code className="info-value">{data.policyHash}</code>
-        </div>
-        <div className="info-item">
-          <span className="info-label">SLO Uptime</span>
-          <span className="info-value">{data.sloUptime}</span>
         </div>
       </div>
 

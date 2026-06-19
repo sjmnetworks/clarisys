@@ -29,6 +29,9 @@ export default function Navbar() {
         )}
       </div>
       <div className="navbar-user">
+        {user?.tenant_name && (
+          <span className="navbar-tenant">{user.tenant_name}</span>
+        )}
         <span className="navbar-username">{user?.username}</span>
         <span className="navbar-role">{user?.role}</span>
         <button className="btn-link" onClick={handleLogout}>Sign out</button>

@@ -4,14 +4,16 @@ import { useCallback } from "react";
 const BASE = "/api";
 
 export function useApi() {
-  const { apiKey } = useAuth();
+  const { apiKey, token } = useAuth();
 
   const headers = useCallback(
-    (extra?: Record<string, string>) => ({
-      "x-api-key": apiKey ?? "",
-      ...extra,
-    }),
-    [apiKey],
+    (extra?: Record<string, string>) => {
+      const h: Record<string, string> = {};
+      if (apiKey) h["x-api-key"] = apiKey;
+      if (token) h["Authorization"] = `Bearer ${token}`;
+      return { ...h, ...extra };
+    },
+    [apiKey, token],
   );
 
   const get = useCallback(
@@ -35,18 +37,40 @@ export function useApi() {
 
   const postFormData = useCallback(
     async (path: string, formData: FormData) => {
+      const h: Record<string, string> = {};
+      if (apiKey) h["x-api-key"] = apiKey;
+      if (token) h["Authorization"] = `Bearer ${token}`;
       const resp = await fetch(`${BASE}${path}`, {
         method: "POST",
-        headers: { "x-api-key": apiKey ?? "" },
+        headers: h,
         body: formData,
       });
       if (!resp.ok) throw new ApiError(resp.status, await resp.text());
       return resp;
     },
-    [apiKey],
+    [apiKey, token],
   );
 
-  return { get, post, postFormData };
+  const put = useCallback(
+    async (path: string, body?: BodyInit, contentType?: string) => {
+      const h = headers(contentType ? { "Content-Type": contentType } : undefined);
+      const resp = await fetch(`${BASE}${path}`, { method: "PUT", headers: h, body });
+      if (!resp.ok) throw new ApiError(resp.status, await resp.text());
+      return resp;
+    },
+    [headers],
+  );
+
+  const del = useCallback(
+    async (path: string) => {
+      const resp = await fetch(`${BASE}${path}`, { method: "DELETE", headers: headers() });
+      if (!resp.ok) throw new ApiError(resp.status, await resp.text());
+      return resp;
+    },
+    [headers],
+  );
+
+  return { get, post, put, del, postFormData };
 }
 
 export class ApiError extends Error {

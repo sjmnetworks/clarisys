@@ -3044,6 +3044,7 @@ def _record_decision_history(
                 "request_id": request_id,
                 "endpoint": endpoint,
                 "caller_sub": caller.sub if caller else "anonymous",
+                "tenant_id": caller.tenant_id if caller else "",
                 "action_requested": action_requested,
                 "decision_verdict": verdict,
                 "overall_status": overall_status,
@@ -3833,9 +3834,16 @@ def evaluate_intake_bulk(
 )
 def decisions_history(
     limit: int = Query(100, ge=1, le=1000),
-    _: CallerIdentity = Depends(require_scope("firewall.evaluate")),
+    caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
 ) -> JSONResponse:
-    items = list_recent_decisions(limit=limit)
+    # Tenant-scoped: admins within a tenant still only see their tenant's data.
+    # Only callers with no tenant (e.g. API-key super-admin) see everything.
+    if caller.tenant_id:
+        items = list_recent_decisions(limit=limit, tenant_id=caller.tenant_id)
+    elif "firewall.admin" in caller.scopes:
+        items = list_recent_decisions(limit=limit)
+    else:
+        items = list_recent_decisions(limit=limit, caller_sub=caller.sub)
     return JSONResponse({"total": len(items), "items": items})
 
 
@@ -3855,12 +3863,296 @@ def auth_whoami(
     caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
 ) -> JSONResponse:
     claims = dict(caller.raw_claims) if caller.raw_claims else {}
+    tenant_name = ""
+    if caller.tenant_id:
+        try:
+            from api.user_store import get_tenant
+            t = get_tenant(caller.tenant_id)
+            if t:
+                tenant_name = t.name
+        except Exception:
+            pass
     return JSONResponse({
         "username": claims.get("username", caller.sub),
         "email": claims.get("email", ""),
         "scopes": sorted(caller.scopes),
         "sub": caller.sub,
+        "tenant_id": caller.tenant_id,
+        "tenant_name": tenant_name,
+        "role": claims.get("role", ""),
     })
+
+
+# ── Email / Google SSO authentication ─────────────────────────────────────────
+
+import secrets as _secrets
+from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+
+_JWT_SECRET = os.environ.get("JWT_SECRET") or _secrets.token_urlsafe(48)
+_JWT_ALGO = "HS256"
+_JWT_EXPIRY_HOURS = 24
+_GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+
+
+def _issue_token(user_id: str, email: str, username: str, scopes: list[str], tenant_id: str = "", role: str = "") -> str:
+    """Issue a self-signed JWT for a local/Google user."""
+    import jwt as _pyjwt
+    now = _dt.now(_tz.utc)
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "username": username,
+        "scopes": scopes,
+        "tenant_id": tenant_id,
+        "role": role,
+        "iat": now,
+        "exp": now + _td(hours=_JWT_EXPIRY_HOURS),
+    }
+    return _pyjwt.encode(payload, _JWT_SECRET, algorithm=_JWT_ALGO)
+
+
+def _decode_local_token(token: str) -> dict:
+    """Decode a self-signed JWT. Raises on failure."""
+    import jwt as _pyjwt
+    return _pyjwt.decode(token, _JWT_SECRET, algorithms=[_JWT_ALGO])
+
+
+class _RegisterRequest(BaseModel):
+    email: str
+    username: str
+    password: str
+    organization: str = ""
+
+
+class _LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class _GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
+@app.post("/auth/register", summary="Register with email and password")
+def auth_register(req: _RegisterRequest) -> JSONResponse:
+    from api.user_store import register_email_user
+    email = req.email.strip().lower()
+    username = req.username.strip()
+    if not email or "@" not in email:
+        raise HTTPException(400, "A valid email address is required.")
+    if not username or len(username) < 2:
+        raise HTTPException(400, "Username must be at least 2 characters.")
+    if len(req.password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters.")
+    try:
+        user = register_email_user(email, username, req.password, getattr(req, 'organization', None))
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    token = _issue_token(user.id, user.email, user.username, sorted(user.scopes), user.tenant_id, user.role)
+    tenant_name = ""
+    try:
+        from api.user_store import get_tenant
+        t = get_tenant(user.tenant_id)
+        if t:
+            tenant_name = t.name
+    except Exception:
+        pass
+    return JSONResponse({
+        "token": token,
+        "user": {
+            "username": user.username,
+            "email": user.email,
+            "scopes": sorted(user.scopes),
+            "sub": user.id,
+            "tenant_id": user.tenant_id,
+            "tenant_name": tenant_name,
+            "role": user.role,
+        },
+    })
+
+
+@app.post("/auth/login", summary="Login with email and password")
+def auth_login(req: _LoginRequest) -> JSONResponse:
+    from api.user_store import lookup_by_email, verify_password
+    email = req.email.strip().lower()
+    user = lookup_by_email(email)
+    if user is None or not verify_password(user, req.password):
+        raise HTTPException(401, "Invalid email or password.")
+    token = _issue_token(user.id, user.email, user.username, sorted(user.scopes), user.tenant_id, user.role)
+    tenant_name = ""
+    try:
+        from api.user_store import get_tenant
+        t = get_tenant(user.tenant_id)
+        if t:
+            tenant_name = t.name
+    except Exception:
+        pass
+    return JSONResponse({
+        "token": token,
+        "user": {
+            "username": user.username,
+            "email": user.email,
+            "scopes": sorted(user.scopes),
+            "sub": user.id,
+            "tenant_id": user.tenant_id,
+            "tenant_name": tenant_name,
+            "role": user.role,
+        },
+    })
+
+
+@app.post("/auth/google", summary="Login or register via Google SSO")
+def auth_google(req: _GoogleLoginRequest) -> JSONResponse:
+    from google.oauth2 import id_token as google_id_token
+    from google.auth.transport import requests as google_requests
+    from api.user_store import get_or_create_google_user
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            req.id_token,
+            google_requests.Request(),
+            _GOOGLE_CLIENT_ID or None,
+        )
+    except Exception:
+        raise HTTPException(401, "Invalid Google token.")
+    email = idinfo.get("email", "")
+    if not email:
+        raise HTTPException(401, "Google account has no email.")
+    name = idinfo.get("name", "") or email.split("@")[0]
+    user = get_or_create_google_user(email, name)
+    token = _issue_token(user.id, user.email, user.username, sorted(user.scopes), user.tenant_id, user.role)
+    tenant_name = ""
+    try:
+        from api.user_store import get_tenant
+        t = get_tenant(user.tenant_id)
+        if t:
+            tenant_name = t.name
+    except Exception:
+        pass
+    return JSONResponse({
+        "token": token,
+        "user": {
+            "username": user.username,
+            "email": user.email,
+            "scopes": sorted(user.scopes),
+            "sub": user.id,
+            "tenant_id": user.tenant_id,
+            "tenant_name": tenant_name,
+            "role": user.role,
+        },
+    })
+
+
+# ── Tenant management ────────────────────────────────────────────────────────
+
+
+class _InviteRequest(BaseModel):
+    email: str
+    username: str
+    password: str
+
+
+class _UpdateUserRequest(BaseModel):
+    role: str | None = None
+    scopes: list[str] | None = None
+    password: str | None = None
+    username: str | None = None
+
+
+@app.get("/tenant/members", summary="List members of the caller's tenant")
+def tenant_members(
+    caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
+) -> JSONResponse:
+    if not caller.tenant_id:
+        raise HTTPException(400, "No tenant associated with this account.")
+    from api.user_store import list_tenant_users
+    users = list_tenant_users(caller.tenant_id)
+    return JSONResponse({
+        "tenant_id": caller.tenant_id,
+        "members": [
+            {"id": u.id, "email": u.email, "username": u.username, "role": u.role, "scopes": sorted(u.scopes)}
+            for u in users
+        ],
+    })
+
+
+@app.post("/tenant/invite", summary="Invite a new user to the caller's tenant")
+def tenant_invite(
+    req: _InviteRequest,
+    caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
+) -> JSONResponse:
+    if not caller.tenant_id:
+        raise HTTPException(400, "No tenant associated with this account.")
+    # Only owners can invite
+    owner_role = caller.raw_claims.get("role", "")
+    if owner_role != "owner":
+        # Check the user store directly
+        from api.user_store import lookup_by_id
+        stored = lookup_by_id(caller.sub)
+        if not stored or stored.role != "owner":
+            raise HTTPException(403, "Only tenant owners can invite members.")
+    from api.user_store import invite_user_to_tenant
+    email = req.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(400, "A valid email address is required.")
+    if not req.username.strip() or len(req.username.strip()) < 2:
+        raise HTTPException(400, "Username must be at least 2 characters.")
+    if len(req.password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters.")
+    try:
+        user = invite_user_to_tenant(caller.tenant_id, email, req.username, req.password)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    return JSONResponse({
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "tenant_id": user.tenant_id,
+    })
+
+
+@app.put("/tenant/members/{user_id}", summary="Update a tenant member's role, scopes, or password")
+def tenant_update_member(
+    user_id: str,
+    req: _UpdateUserRequest,
+    caller: CallerIdentity = Depends(require_scope("firewall.admin")),
+) -> JSONResponse:
+    if not caller.tenant_id:
+        raise HTTPException(400, "No tenant associated with this account.")
+    from api.user_store import update_user
+    try:
+        updated = update_user(
+            user_id, caller.tenant_id,
+            role=req.role, scopes=req.scopes,
+            password=req.password, username=req.username,
+        )
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+    return JSONResponse({
+        "id": updated.id,
+        "email": updated.email,
+        "username": updated.username,
+        "role": updated.role,
+        "scopes": sorted(updated.scopes),
+        "tenant_id": updated.tenant_id,
+    })
+
+
+@app.delete("/tenant/members/{user_id}", summary="Disable (remove) a tenant member")
+def tenant_delete_member(
+    user_id: str,
+    caller: CallerIdentity = Depends(require_scope("firewall.admin")),
+) -> JSONResponse:
+    if not caller.tenant_id:
+        raise HTTPException(400, "No tenant associated with this account.")
+    if user_id == caller.sub:
+        raise HTTPException(400, "You cannot remove yourself.")
+    from api.user_store import disable_user
+    try:
+        disable_user(user_id, caller.tenant_id)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+    return JSONResponse({"status": "ok", "message": "User has been removed."})
 
 
 @app.get(
@@ -4009,12 +4301,13 @@ def compliance_evidence(
         True,
         description="When true, stores generated evidence in the archive and index.",
     ),
-    _: CallerIdentity = Depends(require_scope("firewall.evaluate")),
+    caller: CallerIdentity = Depends(require_scope("firewall.evaluate")),
 ):
+    sub_filter = None if "firewall.admin" in caller.scopes else caller.sub
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     items = [
         row
-        for row in list_recent_decisions(limit=5000)
+        for row in list_recent_decisions(limit=5000, caller_sub=sub_filter)
         if isinstance(row.get("ts"), str)
         and datetime.fromisoformat(row["ts"].replace("Z", "+00:00")) >= cutoff
     ]

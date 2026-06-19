@@ -184,8 +184,12 @@ def append_decision_history(entry: dict[str, Any]) -> None:
             f.flush()
 
 
-def list_recent_decisions(limit: int = 100) -> list[dict[str, Any]]:
-    """Return the most recent history entries first."""
+def list_recent_decisions(limit: int = 100, caller_sub: str | None = None, tenant_id: str | None = None) -> list[dict[str, Any]]:
+    """Return the most recent history entries first.
+
+    If tenant_id is provided, only entries for that tenant are returned.
+    Falls back to caller_sub filtering for backward compatibility.
+    """
     path = _history_path()
     if not path.exists():
         return []
@@ -198,9 +202,15 @@ def list_recent_decisions(limit: int = 100) -> list[dict[str, Any]]:
         if len(rows) >= limit:
             break
         try:
-            rows.append(json.loads(line))
+            entry = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if tenant_id:
+            if entry.get("tenant_id") != tenant_id:
+                continue
+        elif caller_sub is not None and entry.get("caller_sub") != caller_sub:
+            continue
+        rows.append(entry)
     return rows
 
 

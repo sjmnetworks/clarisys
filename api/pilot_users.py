@@ -70,6 +70,7 @@ class PilotUser:
     username: str
     email: str
     scopes: frozenset[str]
+    tenant_id: str
 
 
 def lookup_by_key(raw_key: str) -> PilotUser | None:
@@ -82,6 +83,7 @@ def lookup_by_key(raw_key: str) -> PilotUser | None:
                 username=entry["username"],
                 email=entry.get("email", ""),
                 scopes=frozenset(entry.get("scopes", [])),
+                tenant_id=entry.get("tenant_id", ""),
             )
     return None
 

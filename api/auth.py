@@ -89,6 +89,7 @@ class CallerIdentity:
     sub: str
     scopes: frozenset[str]
     raw_claims: dict
+    tenant_id: str
 
 
 _settings = AuthSettings.from_env()
@@ -192,6 +193,7 @@ def _validate_token(token: str) -> CallerIdentity:
         sub=str(claims.get("sub", "")),
         scopes=_extract_scopes(claims),
         raw_claims=claims,
+        tenant_id=str(claims.get("tenant_id", "")),
     )
 
 
@@ -210,12 +212,7 @@ def require_scope(*scopes: str):
         credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
         api_key: str | None = Security(_api_key_header),
     ) -> CallerIdentity:
-        if not _settings.enabled:
-            caller = CallerIdentity(sub="dev", scopes=required, raw_claims={})
-            request.state.caller = caller
-            return caller
-
-        # ── Pilot API-key path ────────────────────────────────────────────────
+        # ── Pilot API-key path (checked first, regardless of AUTH_ENABLED) ────
         if api_key is not None:
             from api.pilot_users import lookup_by_key
             pilot = lookup_by_key(api_key)
@@ -233,12 +230,31 @@ def require_scope(*scopes: str):
             caller = CallerIdentity(
                 sub=f"pilot:{pilot.username}",
                 scopes=pilot.scopes,
-                raw_claims={"pilot": True, "email": pilot.email},
+                raw_claims={"pilot": True, "email": pilot.email, "username": pilot.username},
+                tenant_id=getattr(pilot, "tenant_id", ""),
             )
             request.state.caller = caller
             return caller
 
-        # ── JWT bearer path ───────────────────────────────────────────────────
+        # ── Self-issued JWT path (works regardless of AUTH_ENABLED) ───────────
+        if credentials is not None and credentials.scheme.lower() == "bearer":
+            local_caller = _try_local_jwt(credentials.credentials)
+            if local_caller is not None:
+                if required and not (required & local_caller.scopes):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Token missing required scope: one of {sorted(required)}",
+                    )
+                request.state.caller = local_caller
+                return local_caller
+
+        # ── Auth disabled fallback (no API key or local JWT provided) ─────────
+        if not _settings.enabled:
+            caller = CallerIdentity(sub="dev", scopes=required, raw_claims={}, tenant_id="")
+            request.state.caller = caller
+            return caller
+
+        # ── External JWT bearer path (JWKS) ───────────────────────────────────
         if credentials is None or credentials.scheme.lower() != "bearer":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -256,6 +272,35 @@ def require_scope(*scopes: str):
         return caller
 
     return _dep
+
+
+def _try_local_jwt(token: str) -> CallerIdentity | None:
+    """Attempt to decode a locally-issued HS256 JWT. Returns None on failure."""
+    import os as _os
+    secret = _os.environ.get("JWT_SECRET")
+    if not secret and not _JWT_AVAILABLE:
+        return None
+    try:
+        # Peek at header to see if it's HS256 (our local tokens)
+        header = jwt.get_unverified_header(token) if jwt else {}
+        if header.get("alg") != "HS256":
+            return None
+        # Import the secret from main — must match
+        try:
+            from api.main import _JWT_SECRET
+            secret = _JWT_SECRET
+        except ImportError:
+            return None
+        claims = jwt.decode(token, secret, algorithms=["HS256"])
+        scopes_raw = claims.get("scopes", []) or claims.get("scp", "").split()
+        return CallerIdentity(
+            sub=claims.get("sub", ""),
+            scopes=frozenset(scopes_raw),
+            raw_claims=claims,
+            tenant_id=claims.get("tenant_id", ""),
+        )
+    except Exception:
+        return None
 
 
 def reload_settings_for_tests() -> AuthSettings:
