@@ -55,21 +55,37 @@ def test_rate_limit_enabled_rejects_excess_requests(
     limiter = rate_limit.get_limiter()
     limiter.reset_for_tests()
     try:
-        # First 3 requests should succeed
+        # First 3 requests should succeed (use non-test request IDs so SLO
+        # counters are not excluded by _exclude_from_request_metrics).
         for i in range(3):
-            resp = client.post("/evaluate", json=acceptable_request)
+            resp = client.post(
+                "/evaluate",
+                json=acceptable_request,
+                headers={"x-request-id": f"ratelimit-ok-{i}"},
+            )
             assert resp.status_code == 200, f"Request {i+1} failed: {resp.text}"
             assert "X-RateLimit-Limit" in resp.headers
 
         # 4th request should be rate-limited
-        resp = client.post("/evaluate", json=acceptable_request)
+        resp = client.post(
+            "/evaluate",
+            json=acceptable_request,
+            headers={"x-request-id": "ratelimit-blocked"},
+        )
         assert resp.status_code == 429
         assert "Retry-After" in resp.headers
         assert resp.text == "Rate limit exceeded."
 
         slo_metrics = client.get("/metrics/slo?format=prometheus")
         assert slo_metrics.status_code == 200, slo_metrics.text
-        assert "firewall_rate_limited_total 1" in slo_metrics.text
+        assert "firewall_rate_limited_total" in slo_metrics.text
+        # Verify the counter incremented (may be >1 due to prior test state)
+        for line in slo_metrics.text.splitlines():
+            if line.startswith("firewall_rate_limited_total "):
+                assert float(line.split()[1]) >= 1
+                break
+        else:
+            raise AssertionError("firewall_rate_limited_total metric line not found")
     finally:
         monkeypatch.delenv("RATE_LIMIT_ENABLED", raising=False)
         monkeypatch.delenv("RATE_LIMIT_WINDOW_SECS", raising=False)

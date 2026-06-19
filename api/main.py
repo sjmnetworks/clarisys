@@ -4365,7 +4365,7 @@ _CSV_BOOL_FIELDS = {"approved_external_sharing", "encryption_required"}
 _CSV_INT_FIELDS_RAW = {"port"}
 _CSV_INT_FIELDS_INTAKE = {"destination_port"}
 _CSV_RAW_SIGNALS = {"source", "destination", "port"}
-_CSV_INTAKE_SIGNALS = {"app_id", "source_name", "destination_name"}
+_CSV_INTAKE_SIGNALS = {"app id", "source name", "destination name"}
 _CSV_PALOALTO_REQUIRED_ALIAS_GROUPS = [
     {"source zone", "from zone", "src zone"},
     {"source address", "src address", "source", "src", "from address", "source ip"},

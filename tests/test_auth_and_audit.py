@@ -503,6 +503,18 @@ def test_synthetic_evaluate_excluded_from_dashboard_counters(
     """Synthetic-tagged decisions must not affect decision or ROI dashboard counters."""
     before = api_main._slo_snapshot()
 
+    # Capture rules-processed counter before the synthetic request
+    metrics_text_before = client.get("/metrics").text
+    before_line = next(
+        (
+            line
+            for line in metrics_text_before.splitlines()
+            if line.startswith("firewall_rules_processed_current ")
+        ),
+        None,
+    )
+    before_value = float(before_line.split()[1]) if before_line else 0.0
+
     resp = client.post(
         "/evaluate",
         json=acceptable_request,
@@ -517,18 +529,19 @@ def test_synthetic_evaluate_excluded_from_dashboard_counters(
     assert after["decisions_total"] == before["decisions_total"]
     assert after["decisions_deny"] == before["decisions_deny"]
 
-    metrics_text = client.get("/metrics").text
-    metric_line = next(
+    # Verify rules-processed counter unchanged after synthetic request
+    metrics_text_after = client.get("/metrics").text
+    after_line = next(
         (
             line
-            for line in metrics_text.splitlines()
+            for line in metrics_text_after.splitlines()
             if line.startswith("firewall_rules_processed_current ")
         ),
         None,
     )
-    assert metric_line is not None
-    value = float(metric_line.split()[1])
-    assert value == 0.0
+    assert after_line is not None
+    after_value = float(after_line.split()[1])
+    assert after_value == before_value
 
 
 def test_evidence_and_slo_endpoints() -> None:

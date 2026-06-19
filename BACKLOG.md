@@ -287,6 +287,13 @@ weekly reliability export have all shipped (`236c78e`, `e967818`).
 3. Dashboard drift guard in CI
    - Add a lightweight check that provisioned Grafana JSON artifacts stay
      syntactically valid and internally consistent before merge.
+4. React frontend (Vite + React in `frontend/`)
+   - Replace Jinja templates with a proper SPA.
+   - Accounts & authentication (login, registration, session management).
+   - Role-based views (admin vs auditor vs read-only).
+   - Interactive results dashboard (filter/sort violations, drill into rules).
+   - Historical audit comparisons / trend charts.
+   - Serve as static assets from FastAPI (`/app` → `frontend/dist/`).
 
 ---
 
