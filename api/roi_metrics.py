@@ -446,12 +446,14 @@ def record_bulk_rules(request_id: str, endpoint: str, rules: list, verdicts: dic
 
 def get_current_metrics() -> dict:
     """Return current metric state as a dict."""
+    total = _METRICS_STATE["total_rules"]
     return {
-        "total_rules": _METRICS_STATE["total_rules"],
-        "hips_freed": int(_METRICS_STATE["total_rules"] * HIPS_FREED_PER_RULE),
-        "hours_saved": int(_METRICS_STATE["total_rules"] * HOURS_PER_RULE),
-        "cost_saved_gbp": int(_METRICS_STATE["total_rules"] * COST_PER_RULE),
-        "fte_redeployed": _METRICS_STATE["total_rules"] * HIPS_FREED_PER_RULE / HOURS_PER_FTE,
+        "total_rules": total,
+        "rules_processed": total,
+        "hips_freed": int(total * HIPS_FREED_PER_RULE),
+        "hours_saved": int(total * HOURS_PER_RULE),
+        "cost_saved_gbp": int(total * COST_PER_RULE),
+        "fte_redeployed": total * HIPS_FREED_PER_RULE / HOURS_PER_FTE,
         "last_updated": _METRICS_STATE["last_updated"],
     }
 
