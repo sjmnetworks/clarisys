@@ -491,6 +491,14 @@ code {
   border-top: 1px solid var(--border);
 }
 
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.report-header h2 { margin: 0; }
+
 .report-content {
   border: 1px solid var(--border);
   border-radius: var(--radius);

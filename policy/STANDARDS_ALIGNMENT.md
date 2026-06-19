@@ -109,7 +109,7 @@ opa eval -i test_pci_compliant.json \
 ### 1. Test the Current Policy
 
 ```bash
-cd /Users/stephenmcconnell/MandS/OPA/policy
+cd /home/ubuntu/calrisys/policy
 
 # Test basic firewall rule (Rule 4: TRAS → GPU)
 opa eval -i test_rule4.json -d data.json -d firewall.rego 'data.policy.firewall.decision'

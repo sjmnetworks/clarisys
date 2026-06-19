@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for the M&S Firewall Policy Compliance API.
+# Multi-stage Dockerfile for the Clarisys Firewall Policy Compliance API.
 #
 # Stage 1: pull a pinned OPA binary, sha256-verified.
 # Stage 2: minimal Python runtime, non-root, read-only friendly, no shell access via /docs.

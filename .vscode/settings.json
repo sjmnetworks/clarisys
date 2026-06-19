@@ -1,21 +1,5 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "/^python3 -c \"import openpyxl; wb = openpyxl\\.load_workbook\\('Firewall Policy\\.xlsx'\\); print\\('Sheets:', wb\\.sheetnames\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd \"/Users/stephenmcconnell/MandS/OPA\" && python3 << 'EOF'\nimport openpyxl\nwb = openpyxl\\.load_workbook\\('Firewall Policy\\.xlsx'\\)\n\nfor sheet_name in wb\\.sheetnames:\n    ws = wb\\[sheet_name\\]\n    print\\(f\"\\\\n=== Sheet: \\{sheet_name\\} ===\"\\)\n    print\\(f\"Dimensions: \\{ws\\.dimensions\\}, Max row: \\{ws\\.max_row\\}, Max col: \\{ws\\.max_column\\}\"\\)\n    # Print first 5 rows\n    for i, row in enumerate\\(ws\\.iter_rows\\(values_only=True\\)\\):\n        if i >= 5:\n            break\n        print\\(row\\)\nEOF$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd \"/Users/stephenmcconnell/MandS/OPA\" && python3 << 'EOF'\nimport openpyxl\nwb = openpyxl\\.load_workbook\\('Firewall Policy\\.xlsx'\\)\nws = wb\\['Firewall Policy'\\]\n\n# Print all rows to understand the full structure\nfor i, row in enumerate\\(ws\\.iter_rows\\(values_only=True\\)\\):\n    print\\(f\"Row \\{i\\+1\\}: \\{row\\}\"\\)\nEOF$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^python3 --version && which python3$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
         ".venv/bin/python": true,
         ".venv/bin/pytest": true,
         ".venv/bin/pip": true

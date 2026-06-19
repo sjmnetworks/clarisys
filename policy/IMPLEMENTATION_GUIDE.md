@@ -25,7 +25,7 @@ Your firewall policy now includes:
 
 ### Current Testing:
 ```bash
-cd /Users/stephenmcconnell/MandS/OPA/policy
+cd /home/ubuntu/calrisys/policy
 
 # Test Rule 4: TRAS to GPU servers (WORKING)
 opa eval -i test_rule4.json -d data.json -d firewall.rego 'data.policy.firewall.decision'
@@ -120,7 +120,7 @@ Output:
 
 **Step 3: Add to data.json**
 ```bash
-# Edit /Users/stephenmcconnell/MandS/OPA/policy/data.json
+# Edit /home/ubuntu/calrisys/policy/data.json
 # Add rule to rules array
 # Increment _metadata.total_rules
 ```
@@ -463,7 +463,7 @@ When Adding a New Rule:
 ## Files Structure
 
 ```
-/Users/stephenmcconnell/MandS/OPA/policy/
+/home/ubuntu/calrisys/policy/
 ├── firewall.rego                 # Core logic ✅
 ├── firewall_compliance.rego      # Compliance validation 🆕
 ├── data.json                     # Rules & address groups ✅

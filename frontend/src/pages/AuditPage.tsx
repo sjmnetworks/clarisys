@@ -124,6 +124,19 @@ export default function AuditPage() {
     setError("");
   };
 
+  const handleDownload = () => {
+    if (!htmlReport) return;
+    const blob = new Blob([htmlReport], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `compliance-report-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="page-card">
       <div className="page-header">
@@ -187,7 +200,12 @@ export default function AuditPage() {
 
       {htmlReport && (
         <div className="report-frame">
-          <h2>Full Report</h2>
+          <div className="report-header">
+            <h2>Full Report</h2>
+            <button className="btn-primary" onClick={handleDownload}>
+              Download Report
+            </button>
+          </div>
           <div
             className="report-content"
             dangerouslySetInnerHTML={{ __html: htmlReport }}
