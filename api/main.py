@@ -6,7 +6,8 @@ Accepts any source/destination IP or FQDN and returns a standards-based verdict.
 import csv
 import io
 import json
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
+from xml.etree.ElementTree import Element as _Element
 import os
 import hashlib
 import html
@@ -3993,7 +3994,10 @@ def auth_whoami(
 import secrets as _secrets
 from datetime import datetime as _dt, timedelta as _td, timezone as _tz
 
-_JWT_SECRET = os.environ.get("JWT_SECRET") or _secrets.token_urlsafe(48)
+_jwt_env = os.environ.get("JWT_SECRET")
+if IS_PRODUCTION and not _jwt_env:
+    raise RuntimeError("JWT_SECRET environment variable must be set in production")
+_JWT_SECRET = _jwt_env or _secrets.token_urlsafe(48)
 _JWT_ALGO = "HS256"
 _JWT_EXPIRY_HOURS = 24
 _GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
@@ -5104,7 +5108,7 @@ def _xml_local_name(tag: str) -> str:
     return tag
 
 
-def _xml_child_text(parent: ET.Element, name: str, default: str = "") -> str:
+def _xml_child_text(parent: _Element, name: str, default: str = "") -> str:
     for child in list(parent):
         if _xml_local_name(child.tag) == name:
             text = (child.text or "").strip()
@@ -5123,7 +5127,7 @@ def _parse_juniper_srx_xml(text: str) -> tuple[list[TrafficRequest], list[AuditI
         invalid.append(AuditInvalidRow(row=1, errors=[f"Invalid XML: {e}"], raw={}))
         return valid, invalid
 
-    policies_nodes: list[ET.Element]
+    policies_nodes: list[_Element]
     if _xml_local_name(root.tag) == "policies":
         policies_nodes = [root]
     else:

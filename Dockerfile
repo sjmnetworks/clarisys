@@ -22,15 +22,14 @@ RUN npm run build
 # ---------- Stage 2: OPA ------------------------------------------------------
 FROM debian:12-slim AS opa
 ARG OPA_VERSION=1.16.2
-ARG OPA_SHA256=PLACEHOLDER_SHA256_FILL_BEFORE_RELEASE
+ARG OPA_SHA256=4ab4b89c131e6df3fed28b0b164083b6641ad67c86ab4c12d417ecfb93838ef1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL -o /tmp/opa \
       "https://openpolicyagent.org/downloads/v${OPA_VERSION}/opa_linux_amd64_static" \
+    && echo "${OPA_SHA256}  /tmp/opa" | sha256sum -c - \
     && chmod +x /tmp/opa
-# NOTE: enable strict checksum verification before promoting beyond dev.
-# RUN echo "${OPA_SHA256}  /tmp/opa" | sha256sum -c -
 
 # ---------- Stage 3: runtime --------------------------------------------------
 FROM python:3.12-slim AS runtime
@@ -94,10 +93,8 @@ EXPOSE 8000
 
 # Bind to 0.0.0.0 inside the container (the host should publish only to
 # 127.0.0.1 or to a private network, never to the public internet).
-CMD ["python", "-m", "uvicorn", "api.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "2", \
-     "--proxy-headers", \
-     "--forwarded-allow-ips=*", \
-     "--no-access-log"]
+# FORWARDED_ALLOW_IPS should be set to the ALB/proxy subnet CIDR in production.
+# Default: private RFC1918 ranges covering typical VPC configurations.
+ENV FORWARDED_ALLOW_IPS="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+
+CMD ["sh", "-c", "exec python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips=$FORWARDED_ALLOW_IPS --no-access-log"]

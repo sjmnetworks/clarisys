@@ -99,8 +99,7 @@ resource "aws_iam_role_policy" "ecs_task_efs" {
         Effect = "Allow"
         Action = [
           "elasticfilesystem:ClientMount",
-          "elasticfilesystem:ClientWrite",
-          "elasticfilesystem:ClientRootAccess"
+          "elasticfilesystem:ClientWrite"
         ]
         Resource = aws_efs_file_system.state.arn
       }

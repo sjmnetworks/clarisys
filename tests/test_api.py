@@ -459,8 +459,8 @@ def test_compliance_coverage_returns_all_frameworks() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body["frameworks"]) == {"Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"}
-    assert len(body["results"]) == 4
+    assert set(body["frameworks"]) == {"Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS", "Cyber Essentials"}
+    assert len(body["results"]) == 5
     iso = next(item for item in body["results"] if item["framework"] == "ISO 27001")
     assert iso["controls_mapped"] >= 1
     assert "A.8.24" in iso["clauses_covered"]
@@ -471,7 +471,7 @@ def test_compliance_coverage_filters_to_single_framework() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["frameworks"] == ["Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS"]
+    assert body["frameworks"] == ["Clarisys NFR", "ISO 27001", "CIS v8.1", "PCI-DSS", "Cyber Essentials"]
     assert len(body["results"]) == 1
     result = body["results"][0]
     assert result["framework"] == "PCI-DSS"

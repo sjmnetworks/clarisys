@@ -20,3 +20,4 @@ markdown>=3.6
 # 1.0.0 has PYSEC-2026-161, 1.0.1 patches it. Floor stays here so a
 # fastapi minor that re-pins to <1.0.1 would still resolve safely.
 starlette>=1.0.1
+defusedxml>=0.7.1
