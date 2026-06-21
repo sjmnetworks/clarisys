@@ -3080,8 +3080,10 @@ def _record_audit(
                         _SLO_COUNTERS["decisions_deny"] += 1
         except Exception:  # noqa: BLE001
             log.exception("decision_history.audit_rows_failed", endpoint=endpoint)
-    else:
-        # Fallback: record a single summary entry when no per-row data
+    elif endpoint.startswith("/audit"):
+        # Fallback: record a single summary entry for audit endpoints
+        # that don't provide per-row data. Non-audit endpoints (e.g.
+        # /evaluate) manage their own decision history recording.
         try:
             overall_status = verdict_summary.get("overall_status", "UNKNOWN")
             acceptable = verdict_summary.get("acceptable", 0)
