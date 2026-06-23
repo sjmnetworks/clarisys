@@ -137,3 +137,33 @@ resource "aws_route53_record" "website_ipv6" {
     evaluate_target_health = false
   }
 }
+
+# A records for alternative domains (e.g. www)
+resource "aws_route53_record" "website_alt" {
+  for_each = toset(var.alternative_domains)
+
+  zone_id = var.hosted_zone_id
+  name    = each.value
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.website.domain_name
+    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# AAAA records for alternative domains
+resource "aws_route53_record" "website_alt_ipv6" {
+  for_each = toset(var.alternative_domains)
+
+  zone_id = var.hosted_zone_id
+  name    = each.value
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.website.domain_name
+    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
