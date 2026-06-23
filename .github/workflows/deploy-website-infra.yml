@@ -94,8 +94,8 @@ jobs:
         run: |
           terraform plan \
             -var-file=environments/${{ matrix.environment }}.tfvars \
-            -out=tfplan \
-            -no-color 2>&1 | tee plan_output.txt
+            -no-color \
+            -input=false 2>&1 | tee plan_output.txt
 
       - name: Comment Plan on PR
         if: github.event_name == 'pull_request'
@@ -115,4 +115,8 @@ jobs:
       - name: Terraform Apply
         if: github.event_name != 'pull_request'
         working-directory: 04-terraform
-        run: terraform apply -auto-approve tfplan
+        run: |
+          terraform apply \
+            -var-file=environments/${{ matrix.environment }}.tfvars \
+            -auto-approve \
+            -input=false
